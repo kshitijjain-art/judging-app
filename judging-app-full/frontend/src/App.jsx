@@ -197,6 +197,37 @@ function downloadCSV() {
       {/* ---------------- ADMIN PANEL ---------------- */}
       {view === "admin" && (
         <>
+          <div style={{ marginTop: 12, marginBottom: 12 }}>
+  <button
+    onClick={loadResults}
+    style={{
+      marginRight: 10,
+      padding: "6px 12px",
+      background: "#2563eb",
+      color: "white",
+      borderRadius: 6,
+      border: "none",
+      cursor: "pointer"
+    }}
+  >
+    Refresh
+  </button>
+
+  <button
+    onClick={downloadCSV}
+    style={{
+      padding: "6px 12px",
+      background: "#16a34a",
+      color: "white",
+      borderRadius: 6,
+      border: "none",
+      cursor: "pointer"
+    }}
+  >
+    Download CSV
+  </button>
+</div>
+
           <h3>Results</h3>
           {results.length === 0 ? (
             <p>No data yet</p>
