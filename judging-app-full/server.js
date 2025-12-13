@@ -39,17 +39,15 @@ app.get("/api/health", (req, res) => {
 app.get("/api/judges", async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT DISTINCT judge_name AS name FROM scores ORDER BY name"
+      "SELECT name FROM judges ORDER BY name"
     );
     res.json(result.rows);
   } catch (err) {
-    res.json([
-      { name: "Judge A" },
-      { name: "Judge B" },
-      { name: "Judge C" }
-    ]);
+    console.error(err);
+    res.status(500).json({ error: "Failed to load judges" });
   }
 });
+
 
 // ================================
 // GET TEAMS (FILTERED BY JUDGE)
