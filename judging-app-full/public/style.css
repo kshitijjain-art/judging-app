@@ -1,13 +1,12 @@
 body{font-family:Arial;background:#f4f7fb;margin:0}
-.navbar{display:flex;align-items:center;gap:15px;background:#1e40af;color:white;padding:10px 20px}
-.logo{height:45px}
-.container{max-width:1000px;margin:30px auto}
+.navbar{background:#1e40af;color:white;padding:15px}
+.container{max-width:1200px;margin:30px auto}
 .card{background:white;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);margin-top:15px}
 label{display:block;margin-top:10px;font-weight:bold}
 select,textarea{width:100%;padding:8px;margin-top:4px}
-.tabs button{margin-right:8px;padding:8px 14px}
 .primary{background:#2563eb;color:white;padding:10px 16px;border:none;border-radius:6px}
 .footer{display:flex;justify-content:space-between;margin-top:15px}
-.info-card{background:#eef2ff;padding:12px;border-radius:8px;margin-top:10px}
-table{border-collapse:collapse;width:100%;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px;text-align:left}
+.info-card{background:#eef2ff;padding:10px;border-radius:6px;margin-top:10px}
+table{border-collapse:collapse;width:100%;margin-top:15px}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
+th{background:#eef2ff}
