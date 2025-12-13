@@ -8,18 +8,14 @@
 <body>
 
 <nav class="navbar">
-  <div class="nav-left">
-    <img src="shivalik-logo.png" class="logo">
-  </div>
-  <div class="nav-right">
-    <h1>Shivalik SharkLab Innovators 1.0</h1>
-  </div>
+  <img src="shivalik-logo.png" class="logo">
+  <h1>Shivalik SharkLab Innovators 1.0</h1>
 </nav>
 
 <div class="container">
   <div class="tabs">
-    <button onclick="showJudge()" class="tab">Judge Panel</button>
-    <button onclick="adminLogin()" class="tab">Admin Panel</button>
+    <button onclick="showJudge()">Judge Panel</button>
+    <button onclick="adminLogin()">Admin Panel</button>
   </div>
 
   <div id="judgePanel" class="card">
@@ -27,7 +23,9 @@
     <select id="judge"></select>
 
     <label>Team</label>
-    <select id="team"></select>
+    <select id="team" onchange="loadTeamDetails()"></select>
+
+    <div id="teamDetails" class="info-card"></div>
 
     <h3>Criteria</h3>
     <div id="criteria"></div>
@@ -37,7 +35,7 @@
 
     <div class="footer">
       <span id="total">Total: 0</span>
-      <button onclick="submitScore()" class="primary">Submit Score</button>
+      <button onclick="submitScore()" class="primary">Submit</button>
     </div>
   </div>
 
