@@ -6,255 +6,141 @@ export default function App() {
   const [eventId, setEventId] = useState("");
   const [teams, setTeams] = useState([]);
   const [criteria, setCriteria] = useState([]);
-  const [judges, setJudges] = useState([]);
+  const [judges] = useState([
+    "Prof. Kshitij Jain",
+    "Dr. Ajay Verma",
+    "Prof. Rahul Sharma",
+    "Prof. Neha Gupta"
+  ]);
   const [judgeName, setJudgeName] = useState("");
-  const [remark, setRemark] = useState("");
-  const [scores, setScores] = useState({});
   const [teamId, setTeamId] = useState("");
+  const [scores, setScores] = useState({});
+  const [remark, setRemark] = useState("");
   const [results, setResults] = useState([]);
-
-  /* ---------------- LOAD INITIAL DATA ---------------- */
+  const [judgeTable, setJudgeTable] = useState([]);
 
   useEffect(() => {
-    fetch("/api/events")
-      .then(r => r.json())
-      .then(d => {
-        setEvents(d);
-        if (d.length) setEventId(d[0].id);
-      });
-
-    fetch("/api/judges")
-      .then(r => r.json())
-      .then(d => setJudges(d));
+    fetch("/api/events").then(r=>r.json()).then(d=>{
+      setEvents(d); if(d.length) setEventId(d[0].id);
+    });
   }, []);
 
   useEffect(() => {
     if (!eventId) return;
 
-    fetch(`/api/events/${eventId}/teams`)
-      .then(r => r.json())
-      .then(d => {
-        setTeams(d);
-        setTeamId(""); // ✅ NO AUTO SELECTION
+    fetch(`/api/events/${eventId}/criteria`)
+      .then(r=>r.json())
+      .then(d=>{
+        setCriteria(d);
+        const m={}; d.forEach(c=>m[c.name]=0); setScores(m);
       });
 
-    fetch(`/api/events/${eventId}/criteria`)
-      .then(r => r.json())
-      .then(d => {
-        setCriteria(d);
-        const map = {};
-        d.forEach(c => (map[c.id] = 0));
-        setScores(map);
-      });
   }, [eventId]);
 
-  /* ---------------- HELPERS ---------------- */
+  useEffect(() => {
+    if (!judgeName || !eventId) return;
+    fetch(`/api/events/${eventId}/teams?judge=${judgeName}`)
+      .then(r=>r.json())
+      .then(setTeams);
+  }, [judgeName, eventId]);
 
-  const totalScore = () =>
-    Object.values(scores).reduce((a, b) => a + Number(b || 0), 0);
-
-  const setCriterionScore = (id, val) =>
-    setScores(prev => ({ ...prev, [id]: Number(val) }));
-
-  /* ---------------- SUBMIT ---------------- */
+  const total = Object.values(scores).reduce((a,b)=>a+b,0);
 
   async function submitScore() {
-    if (!judgeName) {
-      alert("Please select Judge");
-      return;
-    }
-    if (!teamId) {
-      alert("Please select Team");
+    if (!judgeName || !teamId || total===0) {
+      alert("Select judge, team and give marks");
       return;
     }
 
     const payload = {
       judge_name: judgeName,
       team_id: Number(teamId),
-      scores: Object.entries(scores).map(([cid, score]) => ({
-        criterion_id: Number(cid),
-        score: Number(score)
+      scores: Object.entries(scores).map(([k,v])=>({
+        criterion_name:k, score:v
       })),
       remark
     };
 
-    const res = await fetch(`/api/events/${eventId}/scores`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+    await fetch(`/api/events/${eventId}/scores`, {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(payload)
     });
 
-    if (res.ok) {
-      alert("Score submitted successfully");
-      setTeamId("");
-      setJudgeName("");
-      setRemark("");
-    } else {
-      alert("Error submitting score");
-    }
+    alert("Submitted");
+    setTeamId(""); setScores(Object.fromEntries(Object.keys(scores).map(k=>[k,0])));
+    fetch(`/api/events/${eventId}/teams?judge=${judgeName}`)
+      .then(r=>r.json()).then(setTeams);
   }
 
-  /* ---------------- ADMIN ---------------- */
-
-  function loadResults() {
-    fetch(`/api/events/${eventId}/results`)
-      .then(r => r.json())
-      .then(d => setResults(d));
+  function loadAdmin() {
+    fetch(`/api/events/${eventId}/results`).then(r=>r.json()).then(setResults);
+    fetch(`/api/events/${eventId}/judge-wise-table`).then(r=>r.json()).then(setJudgeTable);
   }
-function downloadCSV() {
-  if (!eventId) {
-    alert("Select event first");
-    return;
-  }
-  window.location.href = `/api/events/${eventId}/results.csv`;
-}
 
-  /* ---------------- UI ---------------- */
+  function downloadCSV() {
+    window.location.href=`/api/events/${eventId}/results.csv`;
+  }
 
   return (
-    <div style={{ maxWidth: 900, margin: "auto", padding: 20 }}>
+    <div style={{maxWidth:900,margin:"auto",padding:20}}>
       <h2>Shivalik SharkLab Innovators 1.0</h2>
 
-      <button onClick={() => setView("judge")}>Judge</button>
-      <button onClick={() => { setView("admin"); loadResults(); }}>
-        Admin
-      </button>
+      <button onClick={()=>setView("judge")}>Judge</button>{" "}
+      <button onClick={()=>{setView("admin"); loadAdmin();}}>Admin</button>
 
-      {/* EVENT */}
-      <div style={{ marginTop: 15 }}>
-        <label>Event</label>
-        <select
-          value={eventId}
-          onChange={e => setEventId(e.target.value)}
-        >
-          {events.map(e => (
-            <option key={e.id} value={e.id}>{e.name}</option>
-          ))}
+      {view==="judge" && <>
+        <h3>Judge Panel</h3>
+
+        <select value={judgeName} onChange={e=>setJudgeName(e.target.value)}>
+          <option value="">Select Judge</option>
+          {judges.map(j=><option key={j}>{j}</option>)}
         </select>
-      </div>
 
-      {/* ---------------- JUDGE PANEL ---------------- */}
-      {view === "judge" && (
-        <>
-          <div style={{ marginTop: 15 }}>
-            <label>Judge</label>
-            <select
-              value={judgeName}
-              onChange={e => setJudgeName(e.target.value)}
-            >
-              <option value="">-- Select Judge --</option>
-              {judges.map(j => (
-                <option key={j.name} value={j.name}>{j.name}</option>
-              ))}
+        <select value={teamId} onChange={e=>setTeamId(e.target.value)}>
+          <option value="">Select Team</option>
+          {teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+
+        {criteria.map(c=>(
+          <div key={c.name}>
+            {c.name}
+            <select value={scores[c.name]} onChange={e=>setScores({...scores,[c.name]:+e.target.value})}>
+              {[...Array(c.max_score+1).keys()].map(i=><option key={i}>{i}</option>)}
             </select>
           </div>
+        ))}
 
-          <div style={{ marginTop: 15 }}>
-            <label>Team</label>
-            <select
-              value={teamId}
-              onChange={e => setTeamId(e.target.value)}
-            >
-              <option value="">-- Select Team --</option>
-              {teams.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
+        <p>Total: {total}</p>
+        <textarea placeholder="Remark" value={remark} onChange={e=>setRemark(e.target.value)} />
+        <br/>
+        <button onClick={submitScore}>Submit</button>
+      </>}
 
-          <div style={{ marginTop: 15 }}>
-            <h3>Criteria</h3>
-            {criteria.map(c => (
-              <div key={c.id}>
-                {c.name}
-                <select
-                  value={scores[c.id] || 0}
-                  onChange={e => setCriterionScore(c.id, e.target.value)}
-                >
-                  {Array.from({ length: c.max_score + 1 }, (_, i) => (
-                    <option key={i} value={i}>{i}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
+      {view==="admin" && <>
+        <h3>Admin Dashboard</h3>
+        <button onClick={downloadCSV}>Download CSV</button>
 
-          <p><strong>Total:</strong> {totalScore()}</p>
+        <h4>Top Ranking</h4>
+        <table border="1"><tbody>
+          {results.map((r,i)=>(
+            <tr key={r.team_name}>
+              <td>{i+1}</td><td>{r.team_name}</td><td>{r.avg_score}</td>
+            </tr>
+          ))}
+        </tbody></table>
 
-          <textarea
-            placeholder="Remarks"
-            value={remark}
-            onChange={e => setRemark(e.target.value)}
-          />
-
-          <br /><br />
-          <button onClick={submitScore}>
-            Submit Score
-          </button>
-        </>
-      )}
-
-      {/* ---------------- ADMIN PANEL ---------------- */}
-      {view === "admin" && (
-        <>
-          <div style={{ marginTop: 12, marginBottom: 12 }}>
-  <button
-    onClick={loadResults}
-    style={{
-      marginRight: 10,
-      padding: "6px 12px",
-      background: "#2563eb",
-      color: "white",
-      borderRadius: 6,
-      border: "none",
-      cursor: "pointer"
-    }}
-  >
-    Refresh
-  </button>
-
-  <button
-    onClick={downloadCSV}
-    style={{
-      padding: "6px 12px",
-      background: "#16a34a",
-      color: "white",
-      borderRadius: 6,
-      border: "none",
-      cursor: "pointer"
-    }}
-  >
-    Download CSV
-  </button>
-</div>
-
-          <h3>Results</h3>
-          {results.length === 0 ? (
-            <p>No data yet</p>
-          ) : (
-            <table border="1" cellPadding="6">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Team</th>
-                  <th>Avg Score</th>
-                  <th>Judges</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((r, i) => (
-                  <tr key={r.team_name}>
-                    <td>{i + 1}</td>
-                    <td>{r.team_name}</td>
-                    <td>{r.avg_score}</td>
-                    <td>{r.judges_count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </>
-      )}
+        <h4>Judge-wise Marks</h4>
+        <table border="1"><tbody>
+          {judgeTable.map((r,i)=>(
+            <tr key={i}>
+              <td>{r.judge_name}</td><td>{r.team}</td>
+              <td>{r.presentation}</td><td>{r.idea}</td>
+              <td>{r.uniqueness}</td><td>{r.methodology}</td>
+              <td>{r.total}</td>
+            </tr>
+          ))}
+        </tbody></table>
+      </>}
     </div>
   );
 }
