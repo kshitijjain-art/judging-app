@@ -184,3 +184,36 @@ app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+app.get("/api/events/:eventId/results.csv", async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    const result = await db.query(`
+      SELECT 
+        t.name AS team_name,
+        s.judge_name,
+        c.name AS criterion,
+        s.score,
+        s.remark
+      FROM scores s
+      JOIN teams t ON t.id = s.team_id
+      JOIN criteria c ON c.id = s.criterion_id
+      WHERE s.event_id = $1
+      ORDER BY t.name, s.judge_name, c.id
+    `, [eventId]);
+
+    let csv = "Team,Judge,Criterion,Score,Remark\n";
+
+    result.rows.forEach(r => {
+      csv += `"${r.team_name}","${r.judge_name}","${r.criterion}","${r.score}","${r.remark || ""}"\n`;
+    });
+
+    res.header("Content-Type", "text/csv");
+    res.header("Content-Disposition", "attachment; filename=results.csv");
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("CSV generation failed");
+  }
+});
