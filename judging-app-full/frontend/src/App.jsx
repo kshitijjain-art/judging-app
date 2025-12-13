@@ -101,6 +101,13 @@ export default function App() {
       .then(r => r.json())
       .then(d => setResults(d));
   }
+function downloadCSV() {
+  if (!eventId) {
+    alert("Select event first");
+    return;
+  }
+  window.location.href = `/api/events/${eventId}/results.csv`;
+}
 
   /* ---------------- UI ---------------- */
 
