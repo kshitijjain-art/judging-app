@@ -101,3 +101,37 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+router.get("/events/:eventId/judge-wise-table", async (req, res) => {
+  const { eventId } = req.params;
+
+  try {
+    const result = await db.query(`
+      SELECT
+        s.judge_name AS judge,
+        t.name AS team,
+
+        MAX(CASE WHEN s.criterion_id = 1 THEN s.score END) AS presentation,
+        MAX(CASE WHEN s.criterion_id = 2 THEN s.score END) AS idea,
+        MAX(CASE WHEN s.criterion_id = 3 THEN s.score END) AS uniqueness,
+        MAX(CASE WHEN s.criterion_id = 4 THEN s.score END) AS methodology,
+
+        (
+          COALESCE(MAX(CASE WHEN s.criterion_id = 1 THEN s.score END),0) +
+          COALESCE(MAX(CASE WHEN s.criterion_id = 2 THEN s.score END),0) +
+          COALESCE(MAX(CASE WHEN s.criterion_id = 3 THEN s.score END),0) +
+          COALESCE(MAX(CASE WHEN s.criterion_id = 4 THEN s.score END),0)
+        ) AS total
+
+      FROM scores s
+      JOIN teams t ON t.id = s.team_id
+      WHERE s.event_id = $1
+      GROUP BY s.judge_name, t.name
+      ORDER BY t.name, s.judge_name
+    `, [eventId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load judge-wise table" });
+  }
+});
