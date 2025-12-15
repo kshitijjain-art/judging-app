@@ -25,13 +25,13 @@ export default function App() {
   function hasJudgeSubmitted(eventId, teamId, judgeName) {
     if (!eventId || !teamId || !judgeName) return false;
     return localStorage.getItem(
-      `submitted_${eventId}_${teamId}_${judgeName}`
+      `submitted_${String(eventId)}_${String(teamId)}_${judgeName}`
     );
   }
 
   function markJudgeSubmitted(eventId, teamId, judgeName) {
     localStorage.setItem(
-      `submitted_${eventId}_${teamId}_${judgeName}`,
+      `submitted_${String(eventId)}_${String(teamId)}_${judgeName}`,
       "yes"
     );
   }
@@ -43,7 +43,7 @@ export default function App() {
       .then(r => r.json())
       .then(d => {
         setEvents(d);
-        if (d.length) setEventId(d[0].id);
+        if (d.length) setEventId(String(d[0].id));
       });
 
     fetch("/api/judges")
@@ -78,7 +78,14 @@ export default function App() {
 
     fetch(`/api/teams/${teamId}`)
       .then(r => r.json())
-      .then(setTeamDetails);
+      .then(data => {
+        // FIX: backend may return array
+        if (Array.isArray(data)) {
+          setTeamDetails(data[0] || null);
+        } else {
+          setTeamDetails(data);
+        }
+      });
   }, [teamId]);
 
   /* ================= LOAD CRITERIA ================= */
@@ -116,10 +123,10 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         judge_name: judgeName,
-        team_id: teamId,
+        team_id: Number(teamId),
         scores: Object.entries(scores).map(([k, v]) => ({
           criterion_name: k,
-          score: v
+          score: Number(v)
         })),
         remark
       })
@@ -193,7 +200,7 @@ export default function App() {
             {teams
               .filter(t => !hasJudgeSubmitted(eventId, t.id, judgeName))
               .map(t => (
-                <option key={t.id} value={t.id}>
+                <option key={t.id} value={String(t.id)}>
                   {t.name}
                 </option>
               ))}
@@ -205,7 +212,7 @@ export default function App() {
               t => !hasJudgeSubmitted(eventId, t.id, judgeName)
             ).length === 0 && (
               <p style={{ color: "green", marginTop: 8 }}>
-                ✅ All teams have been evaluated by this judge
+                ✅ All teams evaluated by this judge
               </p>
             )}
 
@@ -232,12 +239,13 @@ export default function App() {
               {c.name}
               <select
                 style={{ marginLeft: 10 }}
+                value={scores[c.name]}
                 onChange={e =>
                   setScores({ ...scores, [c.name]: Number(e.target.value) })
                 }
               >
                 {[...Array(c.max_score + 1).keys()].map(i => (
-                  <option key={i}>{i}</option>
+                  <option key={i} value={i}>{i}</option>
                 ))}
               </select>
             </div>
