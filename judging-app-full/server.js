@@ -15,35 +15,47 @@ const db = new Pool({
 
 /* ================= EVENTS ================= */
 app.get("/api/events", async (req, res) => {
-  const r = await db.query("SELECT * FROM events ORDER BY id");
+  const r = await db.query("SELECT id, name, date FROM events ORDER BY id");
   res.json(r.rows);
 });
 
-/* ================= JUDGES (FROM YOUR TABLE) ================= */
+/* ================= JUDGES ================= */
 app.get("/api/judges", async (req, res) => {
-  try {
-    const r = await db.query(
-      "SELECT id, name, email FROM judges ORDER BY id"
-    );
-    res.json(r.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to load judges" });
-  }
-});
-
-/* ================= TEAMS (LIST) ================= */
-app.get("/api/events/:eventId/teams", async (req, res) => {
   const r = await db.query(
-    "SELECT id, name FROM teams ORDER BY name"
+    "SELECT id, name, email FROM judges ORDER BY id"
   );
   res.json(r.rows);
 });
 
-/* ================= TEAM DETAILS ================= */
+/* ================= TEAMS (LIST BY EVENT) ================= */
+app.get("/api/events/:eventId/teams", async (req, res) => {
+  const r = await db.query(
+    `
+    SELECT id, name
+    FROM teams
+    WHERE event_id = $1
+    ORDER BY name
+    `,
+    [req.params.eventId]
+  );
+  res.json(r.rows);
+});
+
+/* ================= TEAM DETAILS (FULL) ================= */
 app.get("/api/teams/:teamId", async (req, res) => {
   const r = await db.query(
-    "SELECT name, leader_name, member_count FROM teams WHERE id = $1",
+    `
+    SELECT
+      id,
+      name,
+      members,
+      leader_name,
+      leader_email,
+      leader_phone,
+      member_count
+    FROM teams
+    WHERE id = $1
+    `,
     [req.params.teamId]
   );
   res.json(r.rows[0]);
@@ -84,7 +96,7 @@ app.post("/api/events/:eventId/scores", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to submit score" });
+    res.status(500).json({ error: "Score submission failed" });
   }
 });
 
