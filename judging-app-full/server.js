@@ -110,10 +110,11 @@ app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
       SUM(CASE WHEN criterion_name='Uniqueness' THEN score ELSE 0 END) AS uniqueness,
       SUM(CASE WHEN criterion_name='Methodology' THEN score ELSE 0 END) AS methodology,
       SUM(score) AS total
-    FROM scores
-    WHERE event_id=$1
-    GROUP BY judge_name, team_id
-    ORDER BY judge_name
+    FROM scores s
+JOIN teams t ON t.id = s.team_id   -- 🔥 THIS WAS MISSING
+WHERE s.event_id = $1
+GROUP BY s.judge_name, t.name
+ORDER BY t.name, s.judge_name;
   `, [req.params.eventId]);
 
   res.json(r.rows);
