@@ -147,31 +147,41 @@ app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
 // CSV DOWNLOAD
 // ================= CSV DOWNLOAD – JUDGE WISE FINAL =================
 // CSV DOWNLOAD WITH TEAM LEADER DETAILS
+// CSV DOWNLOAD – JUDGE WISE (CRITERIA AS COLUMNS)
 app.get("/api/events/:eventId/results.csv", async (req, res) => {
   const result = await pool.query(`
     SELECT
-      s.judge_name AS judge,
+      s.judge_name,
       t.name AS team,
       t.leader_name,
       t.leader_email,
-      s.criterion_name,
-      s.score
+      SUM(CASE WHEN s.criterion_name = 'Presentation Skills' THEN s.score ELSE 0 END) AS presentation,
+      SUM(CASE WHEN s.criterion_name = 'Idea' THEN s.score ELSE 0 END) AS idea,
+      SUM(CASE WHEN s.criterion_name = 'Uniqueness' THEN s.score ELSE 0 END) AS uniqueness,
+      SUM(CASE WHEN s.criterion_name = 'Methodology' THEN s.score ELSE 0 END) AS methodology,
+      SUM(s.score) AS total
     FROM scores s
     JOIN teams t ON t.id = s.team_id
     WHERE s.event_id = $1
-    ORDER BY t.name, s.judge_name, s.criterion_name
+    GROUP BY
+      s.judge_name,
+      t.name,
+      t.leader_name,
+      t.leader_email
+    ORDER BY t.name, s.judge_name
   `, [req.params.eventId]);
 
-  let csv = "Judge,Team,Leader Name,Leader Email,Criteria,Score\n";
+  let csv =
+    "Judge,Team,Leader Name,Leader Email,Presentation,Idea,Uniqueness,Methodology,Total\n";
 
   result.rows.forEach(r => {
-    csv += `"${r.judge}","${r.team}","${r.leader_name}","${r.leader_email}","${r.criterion_name}",${r.score}\n`;
+    csv += `"${r.judge_name}","${r.team}","${r.leader_name}","${r.leader_email}",${r.presentation},${r.idea},${r.uniqueness},${r.methodology},${r.total}\n`;
   });
 
   res.setHeader("Content-Type", "text/csv");
   res.setHeader(
     "Content-Disposition",
-    "attachment; filename=judging-results.csv"
+    "attachment; filename=judge-wise-results.csv"
   );
   res.send(csv);
 });
