@@ -1,7 +1,21 @@
-let eventId = 1; // default event
-let criteriaList = [];
+let eventId = 1;
+let criteriaData = [];
 
-/* ================= PANEL CONTROL ================= */
+/* ================= UTIL ================= */
+
+function submittedKey(judge, team) {
+  return `submitted_${eventId}_${judge}_${team}`;
+}
+
+function hasSubmitted(judge, team) {
+  return localStorage.getItem(submittedKey(judge, team));
+}
+
+function markSubmitted(judge, team) {
+  localStorage.setItem(submittedKey(judge, team), "yes");
+}
+
+/* ================= PANEL SWITCH ================= */
 
 function showJudge() {
   document.getElementById("judgePanel").style.display = "block";
@@ -9,48 +23,53 @@ function showJudge() {
 }
 
 function openAdmin() {
-  const pass = prompt("Enter Admin Password");
-  if (pass !== "admin2025") {
-    alert("Incorrect password");
+  const pin = prompt("Enter Admin PIN");
+  if (pin !== "2025") {
+    alert("Wrong PIN");
     return;
   }
   document.getElementById("judgePanel").style.display = "none";
   document.getElementById("adminPanel").style.display = "block";
-  loadAdminData();
+  loadAdmin();
 }
 
-/* ================= LOAD INITIAL DATA ================= */
+/* ================= LOAD JUDGES ================= */
 
 fetch("/api/judges")
   .then(r => r.json())
   .then(data => {
-    const jSel = document.getElementById("judgeSelect");
+    const sel = document.getElementById("judgeSelect");
     data.forEach(j => {
       const o = document.createElement("option");
       o.value = j.name;
       o.text = j.name;
-      jSel.appendChild(o);
+      sel.appendChild(o);
     });
   });
 
-fetch(`/api/events/${eventId}/teams`)
-  .then(r => r.json())
-  .then(data => {
-    const tSel = document.getElementById("teamSelect");
-    data.forEach(t => {
-      const o = document.createElement("option");
-      o.value = t.id;
-      o.text = t.name;
-      tSel.appendChild(o);
-    });
-  });
+/* ================= LOAD TEAMS ================= */
 
-fetch(`/api/events/${eventId}/criteria`)
-  .then(r => r.json())
-  .then(data => {
-    criteriaList = data;
-    renderCriteria(data);
-  });
+function loadTeams() {
+  const judge = document.getElementById("judgeSelect").value;
+  const teamSel = document.getElementById("teamSelect");
+
+  teamSel.innerHTML = `<option value="">-- Select Team --</option>`;
+
+  fetch(`/api/events/${eventId}/teams`)
+    .then(r => r.json())
+    .then(teams => {
+      teams.forEach(t => {
+        if (!judge || hasSubmitted(judge, t.id)) return;
+
+        const o = document.createElement("option");
+        o.value = t.id;
+        o.text = t.name;
+        teamSel.appendChild(o);
+      });
+    });
+}
+
+document.getElementById("judgeSelect").addEventListener("change", loadTeams);
 
 /* ================= TEAM DETAILS ================= */
 
@@ -62,45 +81,52 @@ document.getElementById("teamSelect").addEventListener("change", e => {
     .then(r => r.json())
     .then(t => {
       document.getElementById("teamDetails").innerHTML = `
-        <b>Team:</b> ${t.name}<br/>
-        <b>Leader:</b> ${t.leader_name}<br/>
-        <b>Email:</b> ${t.leader_email}<br/>
-        <b>Phone:</b> ${t.leader_phone}<br/>
+        <b>Team:</b> ${t.name}<br>
+        <b>Leader:</b> ${t.leader_name}<br>
+        <b>Email:</b> ${t.leader_email}<br>
+        <b>Phone:</b> ${t.leader_phone}<br>
         <b>Members:</b> ${t.member_count}
       `;
     });
 });
 
-/* ================= CRITERIA ================= */
+/* ================= LOAD CRITERIA ================= */
 
-function renderCriteria(list) {
-  const cDiv = document.getElementById("criteria");
-  cDiv.innerHTML = "";
+fetch(`/api/events/${eventId}/criteria`)
+  .then(r => r.json())
+  .then(data => {
+    criteriaData = data;
+    renderCriteria();
+  });
 
-  list.forEach(c => {
+function renderCriteria() {
+  const box = document.getElementById("criteria");
+  box.innerHTML = "";
+
+  criteriaData.forEach(c => {
     const row = document.createElement("div");
+    row.style.marginBottom = "10px";
+
     row.innerHTML = `
-      <span>${c.name} (Max ${c.max_score})</span>
+      <label>${c.name} (Max ${c.max_score})</label>
       <select data-name="${c.name}">
         ${Array.from({ length: c.max_score + 1 }, (_, i) =>
           `<option value="${i}">${i}</option>`
         ).join("")}
       </select>
     `;
-    cDiv.appendChild(row);
+
+    box.appendChild(row);
   });
 
-  cDiv.addEventListener("change", calculateTotal);
+  box.addEventListener("change", updateTotal);
 }
 
-rememberedTotal = 0;
-
-function calculateTotal() {
+function updateTotal() {
   let total = 0;
   document.querySelectorAll("#criteria select").forEach(s => {
     total += Number(s.value);
   });
-  rememberedTotal = total;
   document.getElementById("totalScore").innerText = total;
 }
 
@@ -133,21 +159,27 @@ function submitScore() {
       remark: document.getElementById("remark").value
     })
   }).then(() => {
+    markSubmitted(judge, team);
     alert("Marks submitted");
-    location.reload();
+
+    document.getElementById("teamSelect").value = "";
+    document.getElementById("teamDetails").innerHTML = "";
+    document.getElementById("remark").value = "";
+
+    loadTeams(); // 🔥 REMOVE TEAM FROM DROPDOWN
   });
 }
 
 /* ================= ADMIN ================= */
 
-function loadAdminData() {
+function loadAdmin() {
   fetch(`/api/events/${eventId}/judge-wise-table`)
     .then(r => r.json())
     .then(rows => {
-      const tbody = document.querySelector("#adminTable tbody");
-      tbody.innerHTML = "";
+      const body = document.querySelector("#adminTable tbody");
+      body.innerHTML = "";
       rows.forEach(r => {
-        tbody.innerHTML += `
+        body.innerHTML += `
           <tr>
             <td>${r.judge_name}</td>
             <td>${r.team_name}</td>
@@ -155,7 +187,7 @@ function loadAdminData() {
             <td>${r.idea}</td>
             <td>${r.uniqueness}</td>
             <td>${r.methodology}</td>
-            <td>${r.total}</td>
+            <td><b>${r.total}</b></td>
           </tr>
         `;
       });
