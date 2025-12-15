@@ -183,6 +183,8 @@ function loadAdmin() {
           <tr>
             <td>${r.judge_name}</td>
             <td>${r.team_name}</td>
+            <td>{r.leader_name}</td>
+            <td>{r.leader_email}</td>
             <td>${r.presentation}</td>
             <td>${r.idea}</td>
             <td>${r.uniqueness}</td>
