@@ -2,47 +2,22 @@
 <html>
 <head>
   <title>Shivalik SharkLab Innovators 1.0</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #f4f6fb;
-      padding: 30px;
-    }
-    h1 { color: #1f2937; }
-    button {
-      padding: 8px 14px;
-      margin-right: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover { opacity: 0.9; }
-    .box {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-top: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <h1>Shivalik SharkLab Innovators 1.0</h1>
+<h2>Shivalik SharkLab Innovators 1.0</h2>
 
-  <div class="box">
-    <h3>Frontend Loaded Successfully ✅</h3>
-    <p>Your backend is running and frontend is now visible.</p>
+<div>
+  <button onclick="showJudge()">Judge Panel</button>
+  <button onclick="showAdmin()">Admin Panel</button>
+</div>
 
-    <button onclick="alert('Judge panel will load here')">
-      Judge Panel
-    </button>
+<hr>
 
-    <button onclick="alert('Admin panel will load here')">
-      Admin Panel
-    </button>
-  </div>
+<div id="judgePanel"></div>
+<div id="adminPanel" style="display:none;"></div>
 
+<script src="app.js"></script>
 </body>
 </html>
