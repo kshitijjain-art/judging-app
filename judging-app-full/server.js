@@ -103,14 +103,16 @@ app.get("/api/events/:eventId/results", async (req, res) => {
 
 // ADMIN – JUDGE WISE TABLE
 // ADMIN – JUDGE WISE TABLE
+// ================= ADMIN – JUDGE WISE TABLE (FINAL) =================
 app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
   try {
     const r = await pool.query(
       `
       SELECT
-        s.judge_name,
-        s.team_id,
-        t.name AS team_name,
+        s.judge_name AS judge,
+        t.name AS team,
+        t.leader_name AS leader_name,
+        t.leader_email AS leader_email,
 
         SUM(CASE WHEN s.criterion_name = 'Presentation Skills' THEN s.score ELSE 0 END) AS presentation,
         SUM(CASE WHEN s.criterion_name = 'Idea' THEN s.score ELSE 0 END) AS idea,
@@ -118,16 +120,14 @@ app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
         SUM(CASE WHEN s.criterion_name = 'Methodology' THEN s.score ELSE 0 END) AS methodology,
 
         SUM(s.score) AS total
-
       FROM scores s
       JOIN teams t ON t.id = s.team_id
       WHERE s.event_id = $1
-
       GROUP BY
         s.judge_name,
-        s.team_id,
-        t.name
-
+        t.name,
+        t.leader_name,
+        t.leader_email
       ORDER BY
         t.name,
         s.judge_name;
@@ -138,9 +138,10 @@ app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
     res.json(r.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Judge-wise table failed" });
+    res.status(500).json({ error: "Failed to load judge-wise table" });
   }
 });
+
 
 
 // CSV DOWNLOAD
