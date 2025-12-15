@@ -1,6 +1,6 @@
-import express from "express";
-import pg from "pg";
-import cors from "cors";
+const express = require("express");
+const pg = require("pg");
+const cors = require("cors");
 
 const app = express();
 app.use(cors());
@@ -27,7 +27,6 @@ app.get("/api/events", async (req, res) => {
 });
 
 /* ================= JUDGES ================= */
-/* judges table: id | name | email */
 
 app.get("/api/judges", async (req, res) => {
   const r = await db.query(
@@ -37,17 +36,6 @@ app.get("/api/judges", async (req, res) => {
 });
 
 /* ================= TEAMS ================= */
-/*
-teams table columns:
-id
-event_id
-name
-members
-leader_name
-leader_email
-leader_phone
-member_count
-*/
 
 app.get("/api/events/:eventId/teams", async (req, res) => {
   const { eventId } = req.params;
@@ -60,7 +48,8 @@ app.get("/api/events/:eventId/teams", async (req, res) => {
   res.json(r.rows);
 });
 
-/* TEAM DETAILS (USED IN JUDGE PANEL) */
+/* TEAM DETAILS */
+
 app.get("/api/teams/:teamId", async (req, res) => {
   const { teamId } = req.params;
 
@@ -79,14 +68,10 @@ app.get("/api/teams/:teamId", async (req, res) => {
     [teamId]
   );
 
-  res.json(r.rows); // frontend handles array
+  res.json(r.rows);
 });
 
 /* ================= CRITERIA ================= */
-/*
-criteria table:
-id | event_id | name | max_score
-*/
 
 app.get("/api/events/:eventId/criteria", async (req, res) => {
   const { eventId } = req.params;
@@ -100,17 +85,6 @@ app.get("/api/events/:eventId/criteria", async (req, res) => {
 });
 
 /* ================= SUBMIT SCORES ================= */
-/*
-scores table:
-id
-event_id
-team_id
-judge_name
-criterion_name
-score
-remark
-created_at
-*/
 
 app.post("/api/events/:eventId/scores", async (req, res) => {
   const { eventId } = req.params;
