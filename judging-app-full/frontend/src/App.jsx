@@ -2,68 +2,112 @@ import React, { useEffect, useState } from "react";
 
 export default function App() {
   const [view, setView] = useState("judge");
+
   const [events, setEvents] = useState([]);
   const [eventId, setEventId] = useState("");
+
+  const [judges, setJudges] = useState([]);
+  const [judgeName, setJudgeName] = useState("");
+
   const [teams, setTeams] = useState([]);
   const [teamId, setTeamId] = useState("");
   const [teamDetails, setTeamDetails] = useState(null);
+
   const [criteria, setCriteria] = useState([]);
   const [scores, setScores] = useState({});
-  const [judges, setJudges] = useState([]);
-  const [judgeName, setJudgeName] = useState("");
   const [remark, setRemark] = useState("");
+
   const [results, setResults] = useState([]);
   const [judgeTable, setJudgeTable] = useState([]);
 
-  /* ---------- LOAD EVENTS & JUDGES ---------- */
+  /* ================= LOCAL STORAGE HELPERS ================= */
+
+  function hasJudgeSubmitted(eventId, teamId, judgeName) {
+    if (!eventId || !teamId || !judgeName) return false;
+    return localStorage.getItem(
+      `submitted_${eventId}_${teamId}_${judgeName}`
+    );
+  }
+
+  function markJudgeSubmitted(eventId, teamId, judgeName) {
+    localStorage.setItem(
+      `submitted_${eventId}_${teamId}_${judgeName}`,
+      "yes"
+    );
+  }
+
+  /* ================= LOAD EVENTS & JUDGES ================= */
+
   useEffect(() => {
-    fetch("/api/events").then(r => r.json()).then(d => {
-      setEvents(d);
-      if (d.length) setEventId(d[0].id);
-    });
-    fetch("/api/judges").then(r => r.json()).then(setJudges);
+    fetch("/api/events")
+      .then(r => r.json())
+      .then(d => {
+        setEvents(d);
+        if (d.length) setEventId(d[0].id);
+      });
+
+    fetch("/api/judges")
+      .then(r => r.json())
+      .then(setJudges);
   }, []);
 
-  /* ---------- LOAD TEAMS ---------- */
+  /* ================= LOAD TEAMS ================= */
+
   useEffect(() => {
-    if (!eventId) return;
+    if (!eventId) {
+      setTeams([]);
+      return;
+    }
+
     fetch(`/api/events/${eventId}/teams`)
       .then(r => r.json())
       .then(d => {
         setTeams(d);
         setTeamId("");
+        setTeamDetails(null);
       });
   }, [eventId]);
 
-  /* ---------- LOAD TEAM DETAILS ---------- */
+  /* ================= LOAD TEAM DETAILS ================= */
+
   useEffect(() => {
     if (!teamId) {
       setTeamDetails(null);
       return;
     }
+
     fetch(`/api/teams/${teamId}`)
       .then(r => r.json())
       .then(setTeamDetails);
   }, [teamId]);
 
-  /* ---------- LOAD CRITERIA ---------- */
+  /* ================= LOAD CRITERIA ================= */
+
   useEffect(() => {
     if (!eventId) return;
+
     fetch(`/api/events/${eventId}/criteria`)
       .then(r => r.json())
       .then(d => {
         setCriteria(d);
-        const obj = {};
-        d.forEach(c => (obj[c.name] = 0));
-        setScores(obj);
+        const map = {};
+        d.forEach(c => (map[c.name] = 0));
+        setScores(map);
       });
   }, [eventId]);
 
-  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  /* ================= SCORE TOTAL ================= */
+
+  const totalScore = Object.values(scores).reduce(
+    (sum, val) => sum + Number(val || 0),
+    0
+  );
+
+  /* ================= SUBMIT SCORE ================= */
 
   async function submitScore() {
     if (!judgeName || !teamId) {
-      alert("Select Judge & Team");
+      alert("Please select Judge and Team");
       return;
     }
 
@@ -81,31 +125,53 @@ export default function App() {
       })
     });
 
-    alert("Score submitted");
+    // MARK THIS TEAM AS COMPLETED FOR THIS JUDGE
+    markJudgeSubmitted(eventId, teamId, judgeName);
+
+    alert("Score submitted successfully");
+
+    // RESET UI
     setTeamId("");
+    setTeamDetails(null);
     setRemark("");
   }
 
+  /* ================= ADMIN ================= */
+
   function loadAdmin() {
-    fetch(`/api/events/${eventId}/results`).then(r => r.json()).then(setResults);
+    fetch(`/api/events/${eventId}/results`)
+      .then(r => r.json())
+      .then(setResults);
+
     fetch(`/api/events/${eventId}/judge-wise-table`)
       .then(r => r.json())
       .then(setJudgeTable);
   }
 
+  /* ================= UI ================= */
+
   return (
     <div style={{ maxWidth: 1000, margin: "auto", padding: 20 }}>
       <h2>Shivalik SharkLab Innovators 1.0</h2>
 
-      <button onClick={() => setView("judge")}>Judge</button>{" "}
-      <button onClick={() => { setView("admin"); loadAdmin(); }}>
-        Admin
-      </button>
+      <div style={{ marginBottom: 15 }}>
+        <button onClick={() => setView("judge")}>Judge Panel</button>{" "}
+        <button onClick={() => { setView("admin"); loadAdmin(); }}>
+          Admin Panel
+        </button>
+      </div>
 
+      {/* ================= JUDGE PANEL ================= */}
       {view === "judge" && (
         <>
-          <select onChange={e => setJudgeName(e.target.value)}>
-            <option value="">Select Judge</option>
+          <h3>Judge Panel</h3>
+
+          {/* JUDGE */}
+          <select
+            value={judgeName}
+            onChange={e => setJudgeName(e.target.value)}
+          >
+            <option value="">-- Select Judge --</option>
             {judges.map(j => (
               <option key={j.id} value={j.name}>
                 {j.name} ({j.email})
@@ -113,15 +179,45 @@ export default function App() {
             ))}
           </select>
 
-          <select value={teamId} onChange={e => setTeamId(e.target.value)}>
-            <option value="">Select Team</option>
-            {teams.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
+          {/* TEAM */}
+          <br /><br />
+          <select
+            value={teamId}
+            onChange={e => {
+              setTeamId(e.target.value);
+              setTeamDetails(null);
+            }}
+          >
+            <option value="">-- Select Team --</option>
+
+            {teams
+              .filter(t => !hasJudgeSubmitted(eventId, t.id, judgeName))
+              .map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
           </select>
 
+          {/* ALL TEAMS DONE MESSAGE */}
+          {judgeName &&
+            teams.filter(
+              t => !hasJudgeSubmitted(eventId, t.id, judgeName)
+            ).length === 0 && (
+              <p style={{ color: "green", marginTop: 8 }}>
+                ✅ All teams have been evaluated by this judge
+              </p>
+            )}
+
+          {/* TEAM DETAILS */}
           {teamDetails && (
-            <div>
+            <div style={{
+              marginTop: 12,
+              padding: 12,
+              border: "1px solid #ccc",
+              borderRadius: 6
+            }}>
+              <p><b>Team:</b> {teamDetails.name}</p>
               <p><b>Leader:</b> {teamDetails.leader_name}</p>
               <p><b>Email:</b> {teamDetails.leader_email}</p>
               <p><b>Phone:</b> {teamDetails.leader_phone}</p>
@@ -129,12 +225,15 @@ export default function App() {
             </div>
           )}
 
+          {/* CRITERIA */}
+          <h4 style={{ marginTop: 15 }}>Evaluation Criteria</h4>
           {criteria.map(c => (
-            <div key={c.name}>
+            <div key={c.name} style={{ marginBottom: 8 }}>
               {c.name}
               <select
+                style={{ marginLeft: 10 }}
                 onChange={e =>
-                  setScores({ ...scores, [c.name]: +e.target.value })
+                  setScores({ ...scores, [c.name]: Number(e.target.value) })
                 }
               >
                 {[...Array(c.max_score + 1).keys()].map(i => (
@@ -144,22 +243,36 @@ export default function App() {
             </div>
           ))}
 
-          <p><b>Total:</b> {total}</p>
-          <textarea placeholder="Remarks" onChange={e => setRemark(e.target.value)} />
-          <br />
-          <button onClick={submitScore}>Submit</button>
+          <p><b>Total Score:</b> {totalScore}</p>
+
+          <textarea
+            placeholder="Remarks (optional)"
+            value={remark}
+            onChange={e => setRemark(e.target.value)}
+            style={{ width: "100%", height: 60 }}
+          />
+
+          <br /><br />
+          <button onClick={submitScore}>Submit Marks</button>
         </>
       )}
 
+      {/* ================= ADMIN PANEL ================= */}
       {view === "admin" && (
         <>
-          <button onClick={() =>
-            window.open(`/api/events/${eventId}/results.csv`, "_blank")
-          }>
-            Download CSV
+          <h3>Admin Dashboard</h3>
+
+          <button
+            onClick={() =>
+              window.open(`/api/events/${eventId}/results.csv`, "_blank")
+            }
+          >
+            Download CSV / Excel
           </button>
 
-          <table border="1">
+          <h4 style={{ marginTop: 20 }}>Judge-wise Marks</h4>
+
+          <table border="1" cellPadding="6">
             <thead>
               <tr>
                 <th>Judge</th>
