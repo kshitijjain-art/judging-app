@@ -86,7 +86,7 @@ export default function App() {
           setTeamDetails(data);
         }
       });
-  }, [teamId]);
+  }, [name]);
 
   /* ================= LOAD CRITERIA ================= */
 
