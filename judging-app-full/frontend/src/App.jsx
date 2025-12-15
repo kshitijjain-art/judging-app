@@ -5,51 +5,37 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [eventId, setEventId] = useState("");
   const [teams, setTeams] = useState([]);
-  const [criteria, setCriteria] = useState([]);
-  const [judges, setJudges] = useState([]);
-  const [judgeName, setJudgeName] = useState("");
   const [teamId, setTeamId] = useState("");
   const [teamDetails, setTeamDetails] = useState(null);
+  const [criteria, setCriteria] = useState([]);
   const [scores, setScores] = useState({});
+  const [judges, setJudges] = useState([]);
+  const [judgeName, setJudgeName] = useState("");
   const [remark, setRemark] = useState("");
   const [results, setResults] = useState([]);
   const [judgeTable, setJudgeTable] = useState([]);
 
-  // ---------- LOAD EVENTS & JUDGES ----------
+  /* ---------- LOAD EVENTS & JUDGES ---------- */
   useEffect(() => {
     fetch("/api/events").then(r => r.json()).then(d => {
       setEvents(d);
       if (d.length) setEventId(d[0].id);
     });
-
-    fetch("/api/judges")
-      .then(r => r.json())
-      .then(setJudges);
+    fetch("/api/judges").then(r => r.json()).then(setJudges);
   }, []);
 
-  // ---------- LOAD CRITERIA ----------
-  useEffect(() => {
-    if (!eventId) return;
-
-    fetch(`/api/events/${eventId}/criteria`)
-      .then(r => r.json())
-      .then(d => {
-        setCriteria(d);
-        const obj = {};
-        d.forEach(c => (obj[c.name] = 0));
-        setScores(obj);
-      });
-  }, [eventId]);
-
-  // ---------- LOAD TEAMS ----------
+  /* ---------- LOAD TEAMS ---------- */
   useEffect(() => {
     if (!eventId) return;
     fetch(`/api/events/${eventId}/teams`)
       .then(r => r.json())
-      .then(setTeams);
+      .then(d => {
+        setTeams(d);
+        setTeamId("");
+      });
   }, [eventId]);
 
-  // ---------- TEAM DETAILS ----------
+  /* ---------- LOAD TEAM DETAILS ---------- */
   useEffect(() => {
     if (!teamId) {
       setTeamDetails(null);
@@ -60,33 +46,46 @@ export default function App() {
       .then(setTeamDetails);
   }, [teamId]);
 
+  /* ---------- LOAD CRITERIA ---------- */
+  useEffect(() => {
+    if (!eventId) return;
+    fetch(`/api/events/${eventId}/criteria`)
+      .then(r => r.json())
+      .then(d => {
+        setCriteria(d);
+        const obj = {};
+        d.forEach(c => (obj[c.name] = 0));
+        setScores(obj);
+      });
+  }, [eventId]);
+
   const total = Object.values(scores).reduce((a, b) => a + b, 0);
 
-  // ---------- SUBMIT ----------
   async function submitScore() {
-    const payload = {
-      judge_name: judgeName,
-      team_id: Number(teamId),
-      scores: Object.entries(scores).map(([k, v]) => ({
-        criterion_name: k,
-        score: v
-      })),
-      remark
-    };
+    if (!judgeName || !teamId) {
+      alert("Select Judge & Team");
+      return;
+    }
 
     await fetch(`/api/events/${eventId}/scores`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        judge_name: judgeName,
+        team_id: teamId,
+        scores: Object.entries(scores).map(([k, v]) => ({
+          criterion_name: k,
+          score: v
+        })),
+        remark
+      })
     });
 
     alert("Score submitted");
     setTeamId("");
-    setTeamDetails(null);
     setRemark("");
   }
 
-  // ---------- ADMIN ----------
   function loadAdmin() {
     fetch(`/api/events/${eventId}/results`).then(r => r.json()).then(setResults);
     fetch(`/api/events/${eventId}/judge-wise-table`)
@@ -105,8 +104,6 @@ export default function App() {
 
       {view === "judge" && (
         <>
-          <h3>Judge Panel</h3>
-
           <select onChange={e => setJudgeName(e.target.value)}>
             <option value="">Select Judge</option>
             {judges.map(j => (
@@ -116,7 +113,7 @@ export default function App() {
             ))}
           </select>
 
-          <select onChange={e => setTeamId(e.target.value)}>
+          <select value={teamId} onChange={e => setTeamId(e.target.value)}>
             <option value="">Select Team</option>
             {teams.map(t => (
               <option key={t.id} value={t.id}>{t.name}</option>
@@ -124,9 +121,10 @@ export default function App() {
           </select>
 
           {teamDetails && (
-            <div style={{ border: "1px solid #ccc", padding: 10 }}>
-              <p><b>Team:</b> {teamDetails.name}</p>
+            <div>
               <p><b>Leader:</b> {teamDetails.leader_name}</p>
+              <p><b>Email:</b> {teamDetails.leader_email}</p>
+              <p><b>Phone:</b> {teamDetails.leader_phone}</p>
               <p><b>Members:</b> {teamDetails.member_count}</p>
             </div>
           )}
@@ -147,7 +145,7 @@ export default function App() {
           ))}
 
           <p><b>Total:</b> {total}</p>
-          <textarea placeholder="Remark" onChange={e => setRemark(e.target.value)} />
+          <textarea placeholder="Remarks" onChange={e => setRemark(e.target.value)} />
           <br />
           <button onClick={submitScore}>Submit</button>
         </>
@@ -155,27 +153,12 @@ export default function App() {
 
       {view === "admin" && (
         <>
-          <h3>Admin Dashboard</h3>
-
-          <button onClick={() => window.open(`/api/events/${eventId}/results.csv`)}>
-            Download CSV / Excel
+          <button onClick={() =>
+            window.open(`/api/events/${eventId}/results.csv`, "_blank")
+          }>
+            Download CSV
           </button>
 
-          <h4>Top Ranking</h4>
-          <table border="1">
-            <tbody>
-              {results.map((r, i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  <td>{r.team_name}</td>
-                  <td>{r.avg_score}</td>
-                  <td>{r.judges_count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <h4>Judge-wise Criteria Marks</h4>
           <table border="1">
             <thead>
               <tr>
