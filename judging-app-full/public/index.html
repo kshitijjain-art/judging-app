@@ -1,67 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Shivalik SharkLab Innovators 1.0</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+<body>
 
-<body style="font-family: Arial; background:#f5f7fb; padding:20px">
+  <header>
+    <h1>Shivalik SharkLab Innovators 1.0</h1>
+    <div class="nav">
+      <button onclick="showJudge()">Judge Panel</button>
+      <button onclick="openAdmin()">Admin Panel</button>
+    </div>
+  </header>
 
-<h2>Shivalik SharkLab Innovators 1.0</h2>
+  <!-- ================= JUDGE PANEL ================= -->
+  <section id="judgePanel">
+    <h2>Judge Panel</h2>
 
-<button onclick="showJudge()">Judge Panel</button>
-<button onclick="showAdmin()">Admin Panel</button>
+    <label>Judge</label>
+    <select id="judgeSelect">
+      <option value="">-- Select Judge --</option>
+    </select>
 
-<hr/>
+    <label>Team</label>
+    <select id="teamSelect">
+      <option value="">-- Select Team --</option>
+    </select>
 
-<!-- ================= JUDGE PANEL ================= -->
-<div id="judgePanel">
+    <div id="teamDetails" class="card"></div>
 
-  <h3>Judge Panel</h3>
+    <h3>Evaluation Criteria</h3>
+    <div id="criteria"></div>
 
-  <label>Judge</label><br/>
-  <select id="judge"></select><br/><br/>
+    <p><strong>Total Score:</strong> <span id="totalScore">0</span></p>
 
-  <label>Team</label><br/>
-  <select id="team" onchange="loadTeamDetails()"></select><br/><br/>
+    <textarea id="remark" placeholder="Remarks (optional)"></textarea>
 
-  <div id="teamDetails" style="background:#fff;padding:10px;border-radius:6px"></div>
+    <button onclick="submitScore()">Submit Marks</button>
+  </section>
 
-  <h4>Criteria</h4>
-  <div id="criteria"></div>
+  <!-- ================= ADMIN PANEL ================= -->
+  <section id="adminPanel" style="display:none;">
+    <h2>Admin Dashboard</h2>
 
-  <br/>
-  <button onclick="submitScore()">Submit Marks</button>
+    <button onclick="downloadCSV()">Download CSV</button>
 
-</div>
+    <h3>Judge-wise Marks</h3>
+    <table id="adminTable">
+      <thead>
+        <tr>
+          <th>Judge</th>
+          <th>Team</th>
+          <th>Presentation</th>
+          <th>Idea</th>
+          <th>Uniqueness</th>
+          <th>Methodology</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-<!-- ================= ADMIN PANEL ================= -->
-<div id="adminPanel" style="display:none">
-
-  <h3>Admin Dashboard</h3>
-
-  <button onclick="loadAdmin()">Refresh</button>
-  <button onclick="downloadCSV()">Download CSV</button>
-
-  <h4>Judge-wise Marks</h4>
-  <table border="1" cellpadding="6">
-    <thead>
-      <tr>
-        <th>Judge</th>
-        <th>Team</th>
-        <th>Presentation</th>
-        <th>Idea</th>
-        <th>Uniqueness</th>
-        <th>Methodology</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody id="adminTable"></tbody>
-  </table>
-
-</div>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
