@@ -144,22 +144,52 @@ app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
 
 
 // CSV DOWNLOAD
+// ================= CSV DOWNLOAD – JUDGE WISE FINAL =================
 app.get("/api/events/:eventId/results.csv", async (req, res) => {
-  const r = await pool.query(`
-    SELECT judge_name, team_id, criterion_name, score
-    FROM scores WHERE event_id=$1
-    ORDER BY judge_name
-  `, [req.params.eventId]);
+  try {
+    const r = await pool.query(
+      `
+      SELECT
+        s.judge_name AS "Judge",
+        t.name AS "Team",
+        SUM(CASE WHEN s.criterion_name = 'Presentation Skills' THEN s.score ELSE 0 END) AS "Presentation",
+        SUM(CASE WHEN s.criterion_name = 'Idea' THEN s.score ELSE 0 END) AS "Idea",
+        SUM(CASE WHEN s.criterion_name = 'Uniqueness' THEN s.score ELSE 0 END) AS "Uniqueness",
+        SUM(CASE WHEN s.criterion_name = 'Methodology' THEN s.score ELSE 0 END) AS "Methodology",
+        SUM(s.score) AS "Total"
+      FROM scores s
+      JOIN teams t ON t.id = s.team_id
+      WHERE s.event_id = $1
+      GROUP BY s.judge_name, t.name
+      ORDER BY t.name, s.judge_name;
+      `,
+      [req.params.eventId]
+    );
 
-  let csv = "Judge,Team,Criteria,Score\n";
-  r.rows.forEach(x => {
-    csv += `${x.judge_name},${x.team_id},${x.criterion_name},${x.score}\n`;
-  });
+    if (r.rows.length === 0) {
+      return res.status(404).send("No data found");
+    }
 
-  res.header("Content-Type", "text/csv");
-  res.attachment("results.csv");
-  res.send(csv);
+    // Convert to CSV
+    const headers = Object.keys(r.rows[0]).join(",");
+    const rows = r.rows.map(row =>
+      Object.values(row).join(",")
+    );
+
+    const csv = [headers, ...rows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=judge-wise-marks.csv"
+    );
+    res.send(csv);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("CSV generation failed");
+  }
 });
+
 
 /* ================= START ================= */
 
