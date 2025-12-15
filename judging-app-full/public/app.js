@@ -178,13 +178,14 @@ function loadAdmin() {
     .then(rows => {
       const body = document.querySelector("#adminTable tbody");
       body.innerHTML = "";
+
       rows.forEach(r => {
         body.innerHTML += `
           <tr>
-            <td>${r.judge_name}</td>
-            <td>${r.team_name}</td>
-            <td>{r.leader_name}</td>
-            <td>{r.leader_email}</td>
+            <td>${r.judge}</td>
+            <td>${r.team}</td>
+            <td>${r.leader_name}</td>
+            <td>${r.leader_email}</td>
             <td>${r.presentation}</td>
             <td>${r.idea}</td>
             <td>${r.uniqueness}</td>
@@ -193,8 +194,12 @@ function loadAdmin() {
           </tr>
         `;
       });
+    })
+    .catch(err => {
+      console.error("Admin load error:", err);
     });
 }
+
 
 function downloadCSV() {
   window.open(`/api/events/${eventId}/results.csv`, "_blank");
