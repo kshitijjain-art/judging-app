@@ -1,45 +1,34 @@
 const express = require("express");
 const path = require("path");
-const cors = require("cors");
 const { Pool } = require("pg");
 
 const app = express();
-
-/* ================= MIDDLEWARE ================= */
-app.use(cors());
 app.use(express.json());
 
 /* ================= DATABASE ================= */
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : false
+  ssl: { rejectUnauthorized: false }
 });
 
-/* ================= FRONTEND SERVING ================= */
-// This makes Express serve files from /public
+/* ================= STATIC FRONTEND ================= */
+
 app.use(express.static(path.join(__dirname, "public")));
 
-// Root URL → load frontend
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-/* ================= API ROUTES ================= */
+/* ================= API ================= */
 
-// Health check
-app.get("/api/health", (req, res) => {
-  res.json({ status: "Backend is running" });
-});
-
-// Events
+// EVENTS
 app.get("/api/events", async (req, res) => {
   const r = await pool.query("SELECT id, name FROM events ORDER BY id");
   res.json(r.rows);
 });
 
-// Judges
+// JUDGES (FROM judges TABLE)
 app.get("/api/judges", async (req, res) => {
   const r = await pool.query(
     "SELECT id, name, email FROM judges ORDER BY name"
@@ -47,41 +36,40 @@ app.get("/api/judges", async (req, res) => {
   res.json(r.rows);
 });
 
-// Teams by event
+// CRITERIA
+app.get("/api/events/:eventId/criteria", async (req, res) => {
+  const r = await pool.query(
+    "SELECT name, max_score FROM criteria ORDER BY id"
+  );
+  res.json(r.rows);
+});
+
+// TEAMS
 app.get("/api/events/:eventId/teams", async (req, res) => {
   const r = await pool.query(
-    "SELECT id, name FROM teams WHERE event_id = $1 ORDER BY name",
+    "SELECT id, name FROM teams WHERE event_id=$1 ORDER BY id",
     [req.params.eventId]
   );
   res.json(r.rows);
 });
 
-// Team details
+// TEAM DETAILS
 app.get("/api/teams/:teamId", async (req, res) => {
   const r = await pool.query(
     `SELECT name, leader_name, leader_email, leader_phone, member_count
-     FROM teams WHERE id = $1`,
+     FROM teams WHERE id=$1`,
     [req.params.teamId]
   );
   res.json(r.rows[0]);
 });
 
-// Criteria
-app.get("/api/events/:eventId/criteria", async (req, res) => {
-  const r = await pool.query(
-    "SELECT id, name, max_score FROM criteria ORDER BY id"
-  );
-  res.json(r.rows);
-});
-
-// Submit scores
+// SUBMIT SCORES
 app.post("/api/events/:eventId/scores", async (req, res) => {
   const { judge_name, team_id, scores, remark } = req.body;
 
-  for (const s of scores) {
+  for (let s of scores) {
     await pool.query(
-      `INSERT INTO scores
-       (event_id, team_id, judge_name, criterion_name, score, remark)
+      `INSERT INTO scores (event_id, team_id, judge_name, criterion_name, score, remark)
        VALUES ($1,$2,$3,$4,$5,$6)`,
       [
         req.params.eventId,
@@ -89,7 +77,7 @@ app.post("/api/events/:eventId/scores", async (req, res) => {
         judge_name,
         s.criterion_name,
         s.score,
-        remark || ""
+        remark
       ]
     );
   }
@@ -97,49 +85,59 @@ app.post("/api/events/:eventId/scores", async (req, res) => {
   res.json({ success: true });
 });
 
-// Admin results
+// ADMIN – TOP RANKING
 app.get("/api/events/:eventId/results", async (req, res) => {
-  const r = await pool.query(
-    `
+  const r = await pool.query(`
     SELECT t.name AS team_name,
            ROUND(AVG(s.score),2) AS avg_score,
            COUNT(DISTINCT s.judge_name) AS judges_count
     FROM scores s
-    JOIN teams t ON t.id = s.team_id
-    WHERE s.event_id = $1
+    JOIN teams t ON t.id=s.team_id
+    WHERE s.event_id=$1
     GROUP BY t.name
     ORDER BY avg_score DESC
-    `,
-    [req.params.eventId]
-  );
+  `, [req.params.eventId]);
+
   res.json(r.rows);
 });
 
-// CSV download
-app.get("/api/events/:eventId/results.csv", async (req, res) => {
-  const r = await pool.query(
-    `
-    SELECT judge_name, t.name AS team, criterion_name, score
-    FROM scores s
-    JOIN teams t ON t.id = s.team_id
-    WHERE s.event_id = $1
-    ORDER BY judge_name, team
-    `,
-    [req.params.eventId]
-  );
+// ADMIN – JUDGE WISE TABLE
+app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
+  const r = await pool.query(`
+    SELECT judge_name, team_id,
+      SUM(CASE WHEN criterion_name='Presentation Skills' THEN score ELSE 0 END) AS presentation,
+      SUM(CASE WHEN criterion_name='Idea' THEN score ELSE 0 END) AS idea,
+      SUM(CASE WHEN criterion_name='Uniqueness' THEN score ELSE 0 END) AS uniqueness,
+      SUM(CASE WHEN criterion_name='Methodology' THEN score ELSE 0 END) AS methodology,
+      SUM(score) AS total
+    FROM scores
+    WHERE event_id=$1
+    GROUP BY judge_name, team_id
+    ORDER BY judge_name
+  `, [req.params.eventId]);
 
-  let csv = "Judge,Team,Criterion,Score\n";
-  r.rows.forEach(row => {
-    csv += `${row.judge_name},${row.team},${row.criterion_name},${row.score}\n`;
+  res.json(r.rows);
+});
+
+// CSV DOWNLOAD
+app.get("/api/events/:eventId/results.csv", async (req, res) => {
+  const r = await pool.query(`
+    SELECT judge_name, team_id, criterion_name, score
+    FROM scores WHERE event_id=$1
+    ORDER BY judge_name
+  `, [req.params.eventId]);
+
+  let csv = "Judge,Team,Criteria,Score\n";
+  r.rows.forEach(x => {
+    csv += `${x.judge_name},${x.team_id},${x.criterion_name},${x.score}\n`;
   });
 
-  res.setHeader("Content-Type", "text/csv");
-  res.setHeader("Content-Disposition", "attachment; filename=results.csv");
+  res.header("Content-Type", "text/csv");
+  res.attachment("results.csv");
   res.send(csv);
 });
 
-/* ================= START SERVER ================= */
+/* ================= START ================= */
+
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+app.listen(PORT, () => console.log("Server running on", PORT));
