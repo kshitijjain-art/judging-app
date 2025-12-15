@@ -1,124 +1,81 @@
-/* ============ GLOBAL ============ */
 body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
   margin: 0;
   padding: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f4f6fb;
-  color: #1f2937;
 }
 
-h2 {
-  margin-bottom: 10px;
-}
-
-h3, h4 {
-  margin-top: 0;
-}
-
-/* ============ BUTTONS ============ */
-button {
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-button:hover {
+header {
   background: #1e40af;
+  color: white;
+  padding: 15px 20px;
 }
 
-button + button {
-  margin-left: 8px;
+.nav button {
+  margin-right: 10px;
+  padding: 6px 12px;
+  border: none;
+  background: white;
+  color: #1e40af;
+  font-weight: bold;
+  cursor: pointer;
 }
 
-/* ============ PANELS ============ */
-#judgePanel,
-#adminPanel {
-  background: #ffffff;
+section {
+  background: white;
+  margin: 20px auto;
   padding: 20px;
-  border-radius: 10px;
-  margin-top: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-/* ============ FORM CONTROLS ============ */
-select, textarea {
-  width: 100%;
-  padding: 8px;
-  margin-top: 6px;
-  margin-bottom: 12px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
-}
-
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: #2563eb;
-}
-
-/* ============ TEAM DETAILS CARD ============ */
-#teamDetails {
-  margin-top: 10px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  padding: 12px;
+  max-width: 900px;
   border-radius: 8px;
 }
 
-/* ============ CRITERIA ROW ============ */
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+select, textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+textarea {
+  height: 60px;
+}
+
+button {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.card {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
 #criteria div {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  margin-top: 8px;
 }
 
-#criteria select {
-  width: 90px;
-}
-
-/* ============ TABLES ============ */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th {
-  background: #2563eb;
-  color: white;
-  text-align: left;
+  margin-top: 15px;
 }
 
 th, td {
-  padding: 8px;
-  border: 1px solid #e5e7eb;
-  font-size: 14px;
-}
-
-tr:nth-child(even) {
-  background: #f9fafb;
-}
-
-/* ============ ADMIN ACTIONS ============ */
-#adminPanel button {
-  margin-bottom: 10px;
-}
-
-/* ============ RESPONSIVE ============ */
-@media (max-width: 600px) {
-  #criteria div {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  #criteria select {
-    width: 100%;
-    margin-top: 5px;
-  }
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
 }
