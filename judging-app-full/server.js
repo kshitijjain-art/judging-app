@@ -102,23 +102,46 @@ app.get("/api/events/:eventId/results", async (req, res) => {
 });
 
 // ADMIN – JUDGE WISE TABLE
+// ADMIN – JUDGE WISE TABLE
 app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
-  const r = await pool.query(`
-    SELECT judge_name, team_id,
-      SUM(CASE WHEN criterion_name='Presentation Skills' THEN score ELSE 0 END) AS presentation,
-      SUM(CASE WHEN criterion_name='Idea' THEN score ELSE 0 END) AS idea,
-      SUM(CASE WHEN criterion_name='Uniqueness' THEN score ELSE 0 END) AS uniqueness,
-      SUM(CASE WHEN criterion_name='Methodology' THEN score ELSE 0 END) AS methodology,
-      SUM(score) AS total
-    FROM scores s
-JOIN teams t ON t.id = s.team_id   -- updated
-WHERE s.event_id = $1
-GROUP BY s.judge_name, t.name
-ORDER BY t.name, s.judge_name;
-  `, [req.params.eventId]);
+  try {
+    const r = await pool.query(
+      `
+      SELECT
+        s.judge_name,
+        s.team_id,
+        t.name AS team_name,
 
-  res.json(r.rows);
+        SUM(CASE WHEN s.criterion_name = 'Presentation Skills' THEN s.score ELSE 0 END) AS presentation,
+        SUM(CASE WHEN s.criterion_name = 'Idea' THEN s.score ELSE 0 END) AS idea,
+        SUM(CASE WHEN s.criterion_name = 'Uniqueness' THEN s.score ELSE 0 END) AS uniqueness,
+        SUM(CASE WHEN s.criterion_name = 'Methodology' THEN s.score ELSE 0 END) AS methodology,
+
+        SUM(s.score) AS total
+
+      FROM scores s
+      JOIN teams t ON t.id = s.team_id
+      WHERE s.event_id = $1
+
+      GROUP BY
+        s.judge_name,
+        s.team_id,
+        t.name
+
+      ORDER BY
+        t.name,
+        s.judge_name;
+      `,
+      [req.params.eventId]
+    );
+
+    res.json(r.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Judge-wise table failed" });
+  }
 });
+
 
 // CSV DOWNLOAD
 app.get("/api/events/:eventId/results.csv", async (req, res) => {
