@@ -1,6 +1,7 @@
 const express = require("express");
-const pg = require("pg");
 const cors = require("cors");
+const { Pool } = require("pg");
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -8,194 +9,155 @@ app.use(express.json());
 
 /* ================= DATABASE ================= */
 
-const db = new pg.Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-/* ================= HEALTH ================= */
+/* ================= API ================= */
 
+// Health check
 app.get("/", (req, res) => {
   res.send("Judging App Backend Running");
 });
 
-/* ================= EVENTS ================= */
-
+/* ---------- EVENTS ---------- */
 app.get("/api/events", async (req, res) => {
-  const r = await db.query("SELECT id, name, date FROM events ORDER BY id");
+  const r = await pool.query("SELECT * FROM events ORDER BY id");
   res.json(r.rows);
 });
 
-/* ================= JUDGES ================= */
-
+/* ---------- JUDGES (FROM judges TABLE) ---------- */
 app.get("/api/judges", async (req, res) => {
-  const r = await db.query(
+  const r = await pool.query(
     "SELECT id, name, email FROM judges ORDER BY name"
   );
   res.json(r.rows);
 });
 
-/* ================= TEAMS ================= */
-
+/* ---------- TEAMS ---------- */
 app.get("/api/events/:eventId/teams", async (req, res) => {
-  const { eventId } = req.params;
-
-  const r = await db.query(
-    `SELECT id, name FROM teams WHERE event_id = $1 ORDER BY name`,
-    [eventId]
+  const r = await pool.query(
+    "SELECT id, name FROM teams WHERE event_id=$1 ORDER BY name",
+    [req.params.eventId]
   );
-
   res.json(r.rows);
 });
 
-/* TEAM DETAILS */
-
+/* ---------- TEAM DETAILS ---------- */
 app.get("/api/teams/:teamId", async (req, res) => {
-  const { teamId } = req.params;
-
-  const r = await db.query(
-    `
-    SELECT
-      id,
-      name,
-      leader_name,
-      leader_email,
-      leader_phone,
-      member_count
-    FROM teams
-    WHERE id = $1
-    `,
-    [teamId]
+  const r = await pool.query(
+    `SELECT name, leader_name, leader_email, leader_phone, member_count
+     FROM teams WHERE id=$1`,
+    [req.params.teamId]
   );
-
-  res.json(r.rows);
+  res.json(r.rows[0]);
 });
 
-/* ================= CRITERIA ================= */
-
+/* ---------- CRITERIA ---------- */
 app.get("/api/events/:eventId/criteria", async (req, res) => {
-  const { eventId } = req.params;
-
-  const r = await db.query(
-    `SELECT id, name, max_score FROM criteria WHERE event_id = $1 ORDER BY id`,
-    [eventId]
+  const r = await pool.query(
+    "SELECT id, name, max_score FROM criteria ORDER BY id"
   );
-
   res.json(r.rows);
 });
 
-/* ================= SUBMIT SCORES ================= */
-
+/* ---------- SUBMIT SCORES ---------- */
 app.post("/api/events/:eventId/scores", async (req, res) => {
-  const { eventId } = req.params;
   const { judge_name, team_id, scores, remark } = req.body;
 
-  try {
-    for (const s of scores) {
-      await db.query(
-        `
-        INSERT INTO scores
-        (event_id, team_id, judge_name, criterion_name, score, remark)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        `,
-        [
-          eventId,
-          team_id,
-          judge_name,
-          s.criterion_name,
-          s.score,
-          remark || null
-        ]
-      );
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to save scores" });
+  for (let s of scores) {
+    await pool.query(
+      `INSERT INTO scores
+      (event_id, judge_name, team_id, criterion_name, score, remark)
+      VALUES ($1,$2,$3,$4,$5,$6)`,
+      [
+        req.params.eventId,
+        judge_name,
+        team_id,
+        s.criterion_name,
+        s.score,
+        remark || ""
+      ]
+    );
   }
+
+  res.json({ success: true });
 });
 
-/* ================= ADMIN: TOP RANKING ================= */
-
+/* ---------- ADMIN RESULTS (RANKING) ---------- */
 app.get("/api/events/:eventId/results", async (req, res) => {
-  const { eventId } = req.params;
-
-  const q = `
-    SELECT
-      t.name AS team_name,
-      ROUND(AVG(s.score), 2) AS avg_score,
-      COUNT(DISTINCT s.judge_name) AS judges_count
+  const r = await pool.query(
+    `
+    SELECT t.name AS team_name,
+           ROUND(AVG(s.score),2) AS avg_score,
+           COUNT(DISTINCT s.judge_name) AS judges_count
     FROM scores s
-    JOIN teams t ON t.id = s.team_id
-    WHERE s.event_id = $1
+    JOIN teams t ON t.id=s.team_id
+    WHERE s.event_id=$1
     GROUP BY t.name
     ORDER BY avg_score DESC
-  `;
-
-  const r = await db.query(q, [eventId]);
+    `,
+    [req.params.eventId]
+  );
   res.json(r.rows);
 });
 
-/* ================= ADMIN: JUDGE-WISE TABLE ================= */
-
+/* ---------- JUDGE-WISE TABLE ---------- */
 app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
-  const { eventId } = req.params;
-
-  const q = `
-    SELECT
-      s.judge_name,
-      t.name AS team_name,
-
-      SUM(CASE WHEN s.criterion_name = 'Presentation Skills' THEN s.score ELSE 0 END) AS presentation,
-      SUM(CASE WHEN s.criterion_name = 'Idea' THEN s.score ELSE 0 END) AS idea,
-      SUM(CASE WHEN s.criterion_name = 'Uniqueness' THEN s.score ELSE 0 END) AS uniqueness,
-      SUM(CASE WHEN s.criterion_name = 'Methodology' THEN s.score ELSE 0 END) AS methodology,
-
-      SUM(s.score) AS total
+  const r = await pool.query(
+    `
+    SELECT judge_name,
+           t.name AS team_name,
+           SUM(CASE WHEN criterion_name='Presentation Skills' THEN score ELSE 0 END) AS presentation,
+           SUM(CASE WHEN criterion_name='Idea' THEN score ELSE 0 END) AS idea,
+           SUM(CASE WHEN criterion_name='Uniqueness' THEN score ELSE 0 END) AS uniqueness,
+           SUM(CASE WHEN criterion_name='Methodology' THEN score ELSE 0 END) AS methodology,
+           SUM(score) AS total
     FROM scores s
-    JOIN teams t ON t.id = s.team_id
-    WHERE s.event_id = $1
-    GROUP BY s.judge_name, t.name
-    ORDER BY total DESC
-  `;
-
-  const r = await db.query(q, [eventId]);
+    JOIN teams t ON t.id=s.team_id
+    WHERE s.event_id=$1
+    GROUP BY judge_name, t.name
+    ORDER BY judge_name, t.name
+    `,
+    [req.params.eventId]
+  );
   res.json(r.rows);
 });
 
-/* ================= CSV DOWNLOAD ================= */
-
+/* ---------- CSV DOWNLOAD ---------- */
 app.get("/api/events/:eventId/results.csv", async (req, res) => {
-  const { eventId } = req.params;
-
-  const q = `
-    SELECT
-      t.name AS team,
-      s.judge_name AS judge,
-      s.criterion_name,
-      s.score
+  const r = await pool.query(
+    `
+    SELECT judge_name, t.name AS team, criterion_name, score
     FROM scores s
-    JOIN teams t ON t.id = s.team_id
-    WHERE s.event_id = $1
-    ORDER BY t.name, s.judge_name
-  `;
+    JOIN teams t ON t.id=s.team_id
+    WHERE s.event_id=$1
+    ORDER BY judge_name, team
+    `,
+    [req.params.eventId]
+  );
 
-  const r = await db.query(q, [eventId]);
-
-  let csv = "Team,Judge,Criterion,Score\n";
+  let csv = "Judge,Team,Criterion,Score\n";
   r.rows.forEach(row => {
-    csv += `${row.team},${row.judge},${row.criterion_name},${row.score}\n`;
+    csv += `${row.judge_name},${row.team},${row.criterion_name},${row.score}\n`;
   });
 
   res.header("Content-Type", "text/csv");
-  res.attachment("judging_results.csv");
+  res.attachment("results.csv");
   res.send(csv);
+});
+
+/* ================= FRONTEND ================= */
+
+app.use(express.static(path.join(__dirname, "public")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 /* ================= START ================= */
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log("Server running on", PORT);
-});
+app.listen(PORT, () =>
+  console.log("Server running on port", PORT)
+);
