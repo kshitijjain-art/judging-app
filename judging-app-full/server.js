@@ -15,7 +15,7 @@ const db = new Pool({
 
 /* ================= EVENTS ================= */
 app.get("/api/events", async (req, res) => {
-  const r = await db.query("SELECT id, name, date FROM events ORDER BY id");
+  const r = await db.query("SELECT id, name FROM events ORDER BY id");
   res.json(r.rows);
 });
 
@@ -27,7 +27,7 @@ app.get("/api/judges", async (req, res) => {
   res.json(r.rows);
 });
 
-/* ================= TEAMS (LIST BY EVENT) ================= */
+/* ================= TEAMS (EVENT WISE) ================= */
 app.get("/api/events/:eventId/teams", async (req, res) => {
   const r = await db.query(
     `
@@ -41,7 +41,7 @@ app.get("/api/events/:eventId/teams", async (req, res) => {
   res.json(r.rows);
 });
 
-/* ================= TEAM DETAILS (FULL) ================= */
+/* ================= TEAM DETAILS ================= */
 app.get("/api/teams/:teamId", async (req, res) => {
   const r = await db.query(
     `
@@ -80,7 +80,7 @@ app.post("/api/events/:eventId/scores", async (req, res) => {
         `
         INSERT INTO scores
         (event_id, team_id, judge_name, criterion_name, score, remark)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1,$2,$3,$4,$5,$6)
         `,
         [
           eventId,
@@ -123,21 +123,20 @@ app.get("/api/events/:eventId/results", async (req, res) => {
     `,
     [req.params.eventId]
   );
-
   res.json(r.rows);
 });
 
-/* ================= JUDGE-WISE CRITERIA TABLE ================= */
+/* ================= JUDGE-WISE TABLE ================= */
 app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
   const r = await db.query(
     `
     SELECT
       s.judge_name,
       t.name AS team_name,
-      SUM(CASE WHEN s.criterion_name = 'Presentation Skills' THEN s.score ELSE 0 END) AS presentation,
-      SUM(CASE WHEN s.criterion_name = 'Idea' THEN s.score ELSE 0 END) AS idea,
-      SUM(CASE WHEN s.criterion_name = 'Uniqueness' THEN s.score ELSE 0 END) AS uniqueness,
-      SUM(CASE WHEN s.criterion_name = 'Methodology' THEN s.score ELSE 0 END) AS methodology,
+      SUM(CASE WHEN s.criterion_name='Presentation Skills' THEN s.score ELSE 0 END) AS presentation,
+      SUM(CASE WHEN s.criterion_name='Idea' THEN s.score ELSE 0 END) AS idea,
+      SUM(CASE WHEN s.criterion_name='Uniqueness' THEN s.score ELSE 0 END) AS uniqueness,
+      SUM(CASE WHEN s.criterion_name='Methodology' THEN s.score ELSE 0 END) AS methodology,
       SUM(s.score) AS total
     FROM scores s
     JOIN teams t ON t.id = s.team_id
@@ -147,11 +146,10 @@ app.get("/api/events/:eventId/judge-wise-table", async (req, res) => {
     `,
     [req.params.eventId]
   );
-
   res.json(r.rows);
 });
 
-/* ================= CSV / EXCEL DOWNLOAD ================= */
+/* ================= CSV DOWNLOAD ================= */
 app.get("/api/events/:eventId/results.csv", async (req, res) => {
   const r = await db.query(
     `
@@ -173,23 +171,18 @@ app.get("/api/events/:eventId/results.csv", async (req, res) => {
     csv += `${row.judge},${row.team},${row.criterion},${row.score}\n`;
   });
 
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=judging_results.csv"
-  );
+  res.setHeader("Content-Disposition", "attachment; filename=judging_results.csv");
   res.setHeader("Content-Type", "text/csv");
   res.send(csv);
 });
 
-/* ================= FRONTEND (PRODUCTION BUILD) ================= */
+/* ================= FRONTEND ================= */
 app.use(express.static(path.join(__dirname, "public")));
+app.get("*", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/index.html"))
+);
 
-app.get("*", (_, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
-
-/* ================= START SERVER ================= */
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log("✅ Server running on port", PORT);
-});
+app.listen(PORT, () =>
+  console.log("✅ Server running on port", PORT)
+);
