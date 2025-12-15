@@ -1,22 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
   <title>Shivalik SharkLab Innovators 1.0</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+
+<body style="font-family: Arial; background:#f5f7fb; padding:20px">
 
 <h2>Shivalik SharkLab Innovators 1.0</h2>
 
-<div>
-  <button onclick="showJudge()">Judge Panel</button>
-  <button onclick="showAdmin()">Admin Panel</button>
+<button onclick="showJudge()">Judge Panel</button>
+<button onclick="showAdmin()">Admin Panel</button>
+
+<hr/>
+
+<!-- ================= JUDGE PANEL ================= -->
+<div id="judgePanel">
+
+  <h3>Judge Panel</h3>
+
+  <label>Judge</label><br/>
+  <select id="judge"></select><br/><br/>
+
+  <label>Team</label><br/>
+  <select id="team" onchange="loadTeamDetails()"></select><br/><br/>
+
+  <div id="teamDetails" style="background:#fff;padding:10px;border-radius:6px"></div>
+
+  <h4>Criteria</h4>
+  <div id="criteria"></div>
+
+  <br/>
+  <button onclick="submitScore()">Submit Marks</button>
+
 </div>
 
-<hr>
+<!-- ================= ADMIN PANEL ================= -->
+<div id="adminPanel" style="display:none">
 
-<div id="judgePanel"></div>
-<div id="adminPanel" style="display:none;"></div>
+  <h3>Admin Dashboard</h3>
+
+  <button onclick="loadAdmin()">Refresh</button>
+  <button onclick="downloadCSV()">Download CSV</button>
+
+  <h4>Judge-wise Marks</h4>
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>Judge</th>
+        <th>Team</th>
+        <th>Presentation</th>
+        <th>Idea</th>
+        <th>Uniqueness</th>
+        <th>Methodology</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody id="adminTable"></tbody>
+  </table>
+
+</div>
 
 <script src="app.js"></script>
 </body>
