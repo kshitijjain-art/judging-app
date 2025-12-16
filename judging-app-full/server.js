@@ -185,6 +185,34 @@ app.get("/api/events/:eventId/results.csv", async (req, res) => {
   );
   res.send(csv);
 });
+// ================= TEAM TOTAL + AVERAGE MARKS =================
+app.get("/api/events/:eventId/team-summary", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        t.id AS team_id,
+        t.name AS team_name,
+        t.leader_name,
+        t.leader_email,
+        COUNT(DISTINCT s.judge_name) AS judges_count,
+        SUM(s.score) AS total_marks,
+        ROUND(SUM(s.score)::numeric / COUNT(DISTINCT s.judge_name), 2) AS average_marks
+      FROM scores s
+      JOIN teams t ON t.id = s.team_id
+      WHERE s.event_id = $1
+      GROUP BY t.id, t.name, t.leader_name, t.leader_email
+      ORDER BY average_marks DESC;
+      `,
+      [req.params.eventId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load team summary" });
+  }
+});
 
 
 
