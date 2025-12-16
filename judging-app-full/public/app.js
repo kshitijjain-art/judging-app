@@ -199,6 +199,28 @@ function loadAdmin() {
       console.error("Admin load error:", err);
     });
 }
+function loadTeamSummary() {
+  fetch(`/api/events/${eventId}/team-summary`)
+    .then(r => r.json())
+    .then(rows => {
+      const body = document.querySelector("#teamSummary tbody");
+      body.innerHTML = "";
+
+      rows.forEach((r, i) => {
+        body.innerHTML += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${r.team_name}</td>
+            <td>${r.leader_name}</td>
+            <td>${r.leader_email}</td>
+            <td>${r.judges_count}</td>
+            <td>${r.total_marks}</td>
+            <td>${r.average_marks}</td>
+          </tr>
+        `;
+      });
+    });
+}
 
 
 function downloadCSV() {
