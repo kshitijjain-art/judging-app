@@ -1,88 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>Shivalik SharkLab Innovators 1.0</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <header>
-    <h1>Shivalik SharkLab Innovators 1.0</h1>
-    <div class="nav">
-      <button onclick="showJudge()">Judge Panel</button>
-      <button onclick="openAdmin()">Admin Panel</button>
-    </div>
-  </header>
+<header>
+  <h1>Shivalik SharkLab Innovators 1.0</h1>
+  <div class="nav">
+    <button onclick="showJudge()">Judge Panel</button>
+    <button onclick="showAdmin()">Admin Panel</button>
+  </div>
+</header>
 
-  <!-- ================= JUDGE PANEL ================= -->
-  <section id="judgePanel">
-    <h2>Judge Panel</h2>
+<div class="container" id="judgePanel">
 
+  <!-- SELECTION -->
+  <div class="card">
     <label>Judge</label>
-    <select id="judgeSelect">
-      <option value="">-- Select Judge --</option>
-    </select>
+    <select id="judgeSelect"></select>
 
     <label>Team</label>
-    <select id="teamSelect">
-      <option value="">-- Select Team --</option>
-    </select>
+    <select id="teamSelect"></select>
+  </div>
 
-    <div id="teamDetails" class="card"></div>
+  <!-- TEAM DETAILS -->
+  <div class="grid-2">
+    <div class="card" id="teamDetails"></div>
+    <div class="card" id="mentorDetails"></div>
+  </div>
 
+  <!-- CRITERIA -->
+  <div class="card">
     <h3>Evaluation Criteria</h3>
-    <div id="criteria"></div>
 
-    <p><strong>Total Score:</strong> <span id="totalScore">0</span></p>
+    <div class="criteria">
+      <label>Presentation (0–10)</label>
+      <select class="score" data-name="Presentation Skills"></select>
+
+      <label>Idea (0–10)</label>
+      <select class="score" data-name="Idea"></select>
+
+      <label>Uniqueness (0–10)</label>
+      <select class="score" data-name="Uniqueness"></select>
+
+      <label>Methodology (0–10)</label>
+      <select class="score" data-name="Methodology"></select>
+    </div>
+
+    <p class="total">Total Score: <span id="totalScore">0</span></p>
 
     <textarea id="remark" placeholder="Remarks (optional)"></textarea>
+    <button class="submit" onclick="submitMarks()">Submit Marks</button>
+  </div>
 
-    <button onclick="submitScore()">Submit Marks</button>
-  </section>
+</div>
 
-  <!-- ================= ADMIN PANEL ================= -->
-  <section id="adminPanel" style="display:none;">
-    <h2>Admin Dashboard</h2>
-
-    <button onclick="downloadCSV()">Download CSV</button>
-
-    <h3>Judge-wise Marks</h3>
-    <table id="adminTable">
-      <thead>
-        <tr>
-          <th>Judge</th>
-          <th>Team</th>
-          <th>Leader Name</th>
-          <th>Leader Email</th>
-          <th>Presentation</th>
-          <th>Idea</th>
-          <th>Uniqueness</th>
-          <th>Methodology</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <h3>Team Total & Average Marks</h3>
-    <table id="TeamSummary" border="1" cellpadding="6">
-  <thead>
-    <tr>
-      <th>Rank</th>
-      <th>Team</th>
-      <th>Leader</th>
-      <th>Email</th>
-      <th>Judges</th>
-      <th>Total Marks</th>
-      <th>Average Marks</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-  </section>
-
-
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
