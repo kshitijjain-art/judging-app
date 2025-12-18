@@ -73,25 +73,51 @@ document.getElementById("judgeSelect").addEventListener("change", loadTeams);
 
 /* ================= TEAM DETAILS ================= */
 
+/* ================= TEAM DETAILS ================= */
+
 document.getElementById("teamSelect").addEventListener("change", e => {
   const teamId = e.target.value;
-  if (!teamId) return;
+  if (!teamId) {
+    document.getElementById("teamDetails").innerHTML = "";
+    return;
+  }
 
   fetch(`/api/teams/${teamId}`)
     .then(r => r.json())
     .then(t => {
       document.getElementById("teamDetails").innerHTML = `
-        <b>Team:</b> ${t.name}<br>
-        <b>Leader:</b> ${t.leader_name}<br>
-        <b>Email:</b> ${t.leader_email}<br>
-        <b>Phone:</b> ${t.leader_phone}<br>
-        <b>Members:</b> ${t.member_count}
-        Mentor: ${team.mentor_name}
-  Mentor Email: ${team.mentor_email}
-  Student Branch: ${team.student_branch}
+        <div class="team-card">
+          <div class="team-grid">
+
+            <!-- LEFT COLUMN -->
+            <div class="team-col">
+              <h4>Team Details</h4>
+              <p><b>Team:</b> ${t.name}</p>
+              <p><b>Leader:</b> ${t.leader_name}</p>
+              <p><b>Email:</b> ${t.leader_email}</p>
+              <p><b>Phone:</b> ${t.leader_phone}</p>
+              <p><b>Members:</b> ${t.member_count}</p>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="team-col">
+              <h4>Mentor & Academic</h4>
+              <p><b>Mentor Name:</b> ${t.mentor_name || "-"}</p>
+              <p><b>Mentor Email:</b> ${t.mentor_email || "-"}</p>
+              <p><b>Student Branch:</b> ${t.student_branch || "-"}</p>
+            </div>
+
+          </div>
+        </div>
       `;
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("teamDetails").innerHTML =
+        "<p style='color:red'>Failed to load team details</p>";
     });
 });
+
 
 /* ================= LOAD CRITERIA ================= */
 
