@@ -1,7 +1,22 @@
 const judgeSelect = document.getElementById("judgeSelect");
 const teamSelect = document.getElementById("teamSelect");
 const totalScoreEl = document.getElementById("totalScore");
+let eventId = 1;
+let criteriaData = [];
 
+/* ================= UTIL ================= */
+
+function submittedKey(judge, team) {
+  return `submitted_${eventId}_${judge}_${team}`;
+}
+
+function hasSubmitted(judge, team) {
+  return localStorage.getItem(submittedKey(judge, team));
+}
+
+function markSubmitted(judge, team) {
+  localStorage.setItem(submittedKey(judge, team), "yes");
+}
 // load dropdown values
 fetch("/api/judges").then(r=>r.json()).then(d=>{
   judgeSelect.innerHTML = '<option value="">Select Judge</option>';
