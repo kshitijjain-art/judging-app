@@ -56,7 +56,45 @@
   </div>
 
 </div>
+  <!-- ================= ADMIN PANEL ================= -->
+  <section id="adminPanel" style="display:none;">
+    <h2>Admin Dashboard</h2>
 
+    <button onclick="downloadCSV()">Download CSV</button>
+
+    <h3>Judge-wise Marks</h3>
+    <table id="adminTable">
+      <thead>
+        <tr>
+          <th>Judge</th>
+          <th>Team</th>
+          <th>Leader Name</th>
+          <th>Leader Email</th>
+          <th>Presentation</th>
+          <th>Idea</th>
+          <th>Uniqueness</th>
+          <th>Methodology</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <h3>Team Total & Average Marks</h3>
+    <table id="TeamSummary" border="1" cellpadding="6">
+  <thead>
+    <tr>
+      <th>Rank</th>
+      <th>Team</th>
+      <th>Leader</th>
+      <th>Email</th>
+      <th>Judges</th>
+      <th>Total Marks</th>
+      <th>Average Marks</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+  </section>
 <script src="app.js"></script>
 </body>
 </html>
