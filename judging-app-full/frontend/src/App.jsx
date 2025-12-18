@@ -95,11 +95,32 @@ export default function App() {
           </select>
 
           {teamDetails && (
-            <div>
-              <p><b>Leader:</b> {teamDetails.leader_name}</p>
-              <p><b>Email:</b> {teamDetails.leader_email}</p>
-              <p><b>Members:</b> {teamDetails.member_count}</p>
-            </div>
+           <div
+    style={{
+      marginTop: 12,
+      padding: 14,
+      border: "1px solid #ddd",
+      borderRadius: 8,
+      background: "#f9fafb"
+    }}
+  >
+    <h4 style={{ marginBottom: 8 }}>Team Details</h4>
+
+    <p><b>Team Name:</b> {teamDetails.name}</p>
+
+    <p><b>Leader Name:</b> {teamDetails.leader_name}</p>
+    <p><b>Leader Email:</b> {teamDetails.leader_email}</p>
+    <p><b>Leader Phone:</b> {teamDetails.leader_phone}</p>
+
+    <hr />
+
+    <p><b>Mentor Name:</b> {teamDetails.mentor_name || "—"}</p>
+    <p><b>Mentor Email:</b> {teamDetails.mentor_email || "—"}</p>
+
+    <p><b>Student Branch:</b> {teamDetails.student_branch || "—"}</p>
+
+    <p><b>Total Members:</b> {teamDetails.member_count}</p>
+  </div>
           )}
 
           {criteria.map(c=>(
