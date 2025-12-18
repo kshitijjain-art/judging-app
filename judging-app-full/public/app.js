@@ -88,7 +88,7 @@ document.getElementById("teamSelect").addEventListener("change", e => {
         <b>Members:</b> ${t.member_count}
         Mentor: ${team.mentor_name}
   Mentor Email: ${team.mentor_email}
-  Student Branch: ${team.student_branch
+  Student Branch: ${team.student_branch}
       `;
     });
 });
