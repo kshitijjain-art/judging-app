@@ -2,112 +2,68 @@ body {
   font-family: Arial, sans-serif;
   background: #f5f7fb;
   margin: 0;
-  padding: 0;
 }
 
 header {
   background: #1e40af;
   color: white;
-  padding: 15px 20px;
+  padding: 15px 30px;
 }
 
 .nav button {
   margin-right: 10px;
   padding: 6px 12px;
   border: none;
-  background: white;
-  color: #1e40af;
-  font-weight: bold;
+  border-radius: 6px;
   cursor: pointer;
 }
 
-section {
-  background: white;
-  margin: 20px auto;
-  padding: 20px;
+.container {
   max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
   border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
 }
 
 label {
   display: block;
-  margin-top: 12px;
-  font-weight: bold;
+  margin-top: 10px;
 }
 
 select, textarea {
   width: 100%;
-  padding: 8px;
+  padding: 6px;
   margin-top: 5px;
 }
 
-textarea {
-  height: 60px;
+.criteria {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-button {
-  margin-top: 15px;
-  padding: 10px 15px;
+.total {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.submit {
   background: #2563eb;
   color: white;
   border: none;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.card {
-  margin-top: 10px;
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-#criteria div {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 6px;
-  text-align: center;
-}
-
-.team-card {
-  margin-top: 12px;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #fafafa;
-}
-
-.team-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-.team-col h4 {
-  margin-bottom: 8px;
-  color: #1e40af;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 4px;
-}
-
-.team-col p {
-  margin: 4px 0;
-  font-size: 14px;
-}
-
-@media (max-width: 768px) {
-  .team-grid {
-    grid-template-columns: 1fr;
-  }
+  border-radius: 6px;
+  cursor: pointer;
 }
