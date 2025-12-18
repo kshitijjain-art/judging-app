@@ -60,7 +60,7 @@ app.get("/api/teams/:teamId", async (req, res) => {
       mentor_email,
       student_branch
     FROM teams
-    WHERE id = $1::INTEGER
+    WHERE id = $1
      `,
     [req.params.teamId]
   );
