@@ -56,8 +56,12 @@ app.get("/api/events/:eventId/teams", async (req, res) => {
 // TEAM DETAILS
 app.get("/api/teams/:teamId", async (req, res) => {
   const r = await pool.query(
-    `SELECT name, leader_name, leader_email, leader_phone, member_count
-     FROM teams WHERE id=$1`,
+    `SELECT name, leader_name, leader_email, leader_phone, member_count,mentor_name,
+      mentor_email,
+      student_branch
+    FROM teams
+    WHERE id = $1::INTEGER
+     `,
     [req.params.teamId]
   );
   res.json(r.rows[0]);
