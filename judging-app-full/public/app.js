@@ -61,5 +61,137 @@ function submitMarks(){
       scores,
       remark: document.getElementById("remark").value
     })
-  }).then(()=>alert("Marks Submitted"));
+  }).then(() => {
+    markSubmitted(judge, team);
+    alert("Marks submitted");
+
+    document.getElementById("teamSelect").value = "";
+    document.getElementById("teamDetails").innerHTML = "";
+    document.getElementById("remark").value = "";
+
+    loadTeams(); // 🔥 REMOVE TEAM FROM DROPDOWN
+  });
+}
+/* ================= PANEL SWITCH ================= */
+
+function showJudge() {
+  document.getElementById("judgePanel").style.display = "block";
+  document.getElementById("adminPanel").style.display = "none";
+}
+
+function openAdmin() {
+  const pin = prompt("Enter Admin PIN");
+  if (pin !== "2025") {
+    alert("Wrong PIN");
+    return;
+  }
+  document.getElementById("judgePanel").style.display = "none";
+  document.getElementById("adminPanel").style.display = "block";
+  loadAdmin();
+}
+/* ================= TEAM DETAILS ================= */
+
+/* ================= TEAM DETAILS ================= */
+
+document.getElementById("teamSelect").addEventListener("change", e => {
+  const teamId = e.target.value;
+  if (!teamId) {
+    document.getElementById("teamDetails").innerHTML = "";
+    return;
+  }
+
+  fetch(`/api/teams/${teamId}`)
+    .then(r => r.json())
+    .then(t => {
+      document.getElementById("teamDetails").innerHTML = `
+        <div class="team-card">
+          <div class="team-grid">
+
+            <!-- LEFT COLUMN -->
+            <div class="team-col">
+              <h4>Team Details</h4>
+              <p><b>Team:</b> ${t.name}</p>
+              <p><b>Leader:</b> ${t.leader_name}</p>
+              <p><b>Email:</b> ${t.leader_email}</p>
+              <p><b>Phone:</b> ${t.leader_phone}</p>
+              <p><b>Members:</b> ${t.member_count}</p>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="team-col">
+              <h4>Mentor & Academic</h4>
+              <p><b>Mentor Name:</b> ${t.mentor_name || "-"}</p>
+              <p><b>Mentor Email:</b> ${t.mentor_email || "-"}</p>
+              <p><b>Student Branch:</b> ${t.student_branch || "-"}</p>
+            </div>
+
+          </div>
+        </div>
+      `;
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("teamDetails").innerHTML =
+        "<p style='color:red'>Failed to load team details</p>";
+    });
+});
+
+/* ================= ADMIN ================= */
+
+function loadAdmin() {
+  fetch(`/api/events/${eventId}/judge-wise-table`)
+    .then(r => r.json())
+    .then(rows => {
+      const body = document.querySelector("#adminTable tbody");
+      body.innerHTML = "";
+
+      rows.forEach(r => {
+        body.innerHTML += `
+          <tr>
+            <td>${r.judge}</td>
+            <td>${r.team}</td>
+            <td>${r.leader_name}</td>
+            <td>${r.leader_email}</td>
+            <td>${r.presentation}</td>
+            <td>${r.idea}</td>
+            <td>${r.uniqueness}</td>
+            <td>${r.methodology}</td>
+            <td><b>${r.total}</b></td>
+          </tr>
+        `;
+      });
+    })
+    .catch(err => {
+      console.error("Admin load error:", err);
+    });
+
+function loadTeamSummary() {
+  fetch(`/api/events/${eventId}/team-summary`)
+    .then(r => r.json())
+    .then(rows => {
+      const body = document.querySelector("#teamSummary tbody");
+      body.innerHTML = "";
+
+      rows.forEach((r, i) => {
+        body.innerHTML += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${r.team_name}</td>
+            <td>${r.leader_name}</td>
+            <td>${r.leader_email}</td>
+            <td>${r.judges_count}</td>
+            <td>${r.total_marks}</td>
+            <td>${r.average_marks}</td>
+          </tr>
+        `;
+      });
+    });
+}
+
+  
+}
+
+
+function downloadCSV() {
+  window.open(`/api/events/${eventId}/results.csv`, "_blank");
 }
