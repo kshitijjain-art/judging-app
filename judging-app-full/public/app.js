@@ -227,7 +227,7 @@ function loadAdmin() {
     .catch(err => {
       console.error("Admin load error:", err);
     });
-}
+
 function loadTeamSummary() {
   fetch(`/api/events/${eventId}/team-summary`)
     .then(r => r.json())
@@ -249,6 +249,9 @@ function loadTeamSummary() {
         `;
       });
     });
+}
+
+  
 }
 
 
