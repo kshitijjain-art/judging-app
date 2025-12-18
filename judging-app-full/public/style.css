@@ -67,3 +67,52 @@ select, textarea {
   border-radius: 6px;
   cursor: pointer;
 }
+#criteria div {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
+
+.team-card {
+  margin-top: 12px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.team-col h4 {
+  margin-bottom: 8px;
+  color: #1e40af;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 4px;
+}
+
+.team-col p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+}
