@@ -1,36 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Shivalik SharkLab Innovators 1.0</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<header>
-  <h1>Shivalik SharkLab Innovators 1.0</h1>
-  <div class="nav">
-    <button onclick="showJudge()">Judge Panel</button>
-    <button onclick="openAdmin()">Admin Panel</button>
-  </div>
-</header>
+  <header>
+    <h1>Shivalik SharkLab Innovators 1.0</h1>
+    <div class="nav">
+      <button onclick="showJudge()">Judge Panel</button>
+      <button onclick="openAdmin()">Admin Panel</button>
+    </div>
+  </header>
 
-<div class="container" id="judgePanel">
+  <!-- ================= JUDGE PANEL ================= -->
+  <section id="judgePanel">
+    <h2>Judge Panel</h2>
 
-  <!-- SELECTION -->
-  <div class="card">
     <label>Judge</label>
-    <select id="judgeSelect"></select>
+    <select id="judgeSelect">
+      <option value="">-- Select Judge --</option>
+    </select>
 
     <label>Team</label>
-    <select id="teamSelect"></select>
-  </div>
+    <select id="teamSelect">
+      <option value="">-- Select Team --</option>
+    </select>
 
-  <!-- TEAM DETAILS -->
-  <div class="grid-2">
-    <div class="card" id="teamDetails"></div>
-    
-  </div>
+    <div id="teamDetails" class="card"></div>
 
+    <h3>Evaluation Criteria</h3>
   <!-- CRITERIA -->
   <div class="card">
     <h3>Evaluation Criteria</h3>
@@ -54,8 +55,8 @@
     <textarea id="remark" placeholder="Remarks (optional)"></textarea>
     <button class="submit" onclick="submitMarks()">Submit Marks</button>
   </div>
+  </section>
 
-</div>
   <!-- ================= ADMIN PANEL ================= -->
   <section id="adminPanel" style="display:none;">
     <h2>Admin Dashboard</h2>
@@ -95,6 +96,9 @@
   <tbody></tbody>
 </table>
   </section>
-<script src="app.js"></script>
+
+
+
+  <script src="app.js"></script>
 </body>
 </html>
